@@ -11,10 +11,6 @@
     <div class="cbx-view">
       <canvas class="cbx-canvas"></canvas>
       <div class="cbx-hint">Glissez pour pivoter · molette pour zoomer</div>
-      <div class="cbx-price-overlay">
-        <div class="cbx-price-dims" data-out="summary2">35 × 75 × 16.6 cm</div>
-        <div class="cbx-price-tag" data-out="supp2">+0,00 €</div>
-      </div>
       <div class="cbx-bar">
         <div class="cbx-bar-open">
           <div class="cbx-bar-row"><span>Ouvrir la porte</span><span class="cbx-val" data-out="open">90°</span></div>
@@ -34,7 +30,7 @@
         <h3 class="cbx-title">Configurez votre modèle</h3>
       </header>
 
-      <div class="cbx-group">
+      <div class="cbx-group cbx-step" data-step="1">
         <span class="cbx-label">Format</span>
         <div class="cbx-presets">
           <button class="cbx-preset" data-preset="55">55</button>
@@ -42,34 +38,27 @@
           <button class="cbx-preset" data-preset="95">95</button>
           <button class="cbx-preset cbx-preset--wide" data-preset="custom">Sur-mesure</button>
         </div>
-      </div>
-
-      <div class="cbx-group">
         <div class="cbx-row"><span class="cbx-label">Largeur</span><span class="cbx-val" data-out="L">35 cm</span></div>
         <input class="cbx-range" type="range" id="cbx-L" min="20" max="80" step="0.5" value="35">
-
         <div class="cbx-row"><span class="cbx-label">Hauteur</span><span class="cbx-val" data-out="H">75 cm</span></div>
         <input class="cbx-range" type="range" id="cbx-H" min="30" max="120" step="0.5" value="75">
-
         <div class="cbx-row"><span class="cbx-label">Profondeur</span><span class="cbx-val" data-out="P">16.6 cm</span></div>
         <input class="cbx-range" type="range" id="cbx-P" min="8" max="26" step="0.1" value="16.6">
       </div>
 
-      <div class="cbx-group">
+      <div class="cbx-group cbx-step" data-step="2">
         <span class="cbx-label">Encoche passe-câble (à l'arrière)</span>
-
         <label class="cbx-row cbx-toggle">
           <span class="cbx-sub">En bas</span>
-          <input type="checkbox" id="cbx-notch" checked>
+          <input type="checkbox" id="cbx-notch">
           <span class="cbx-switch"></span>
         </label>
-        <div class="cbx-notch-controls" id="cbx-notch-ctrl">
+        <div class="cbx-notch-controls is-off" id="cbx-notch-ctrl">
           <div class="cbx-row"><span class="cbx-sub">Largeur</span><span class="cbx-val" data-out="nw">12 cm</span></div>
           <input class="cbx-range" type="range" id="cbx-nw" min="2" max="40" step="0.5" value="12">
           <div class="cbx-row"><span class="cbx-sub">Profondeur</span><span class="cbx-val" data-out="nh">6 cm</span></div>
           <input class="cbx-range" type="range" id="cbx-nh" min="1" max="20" step="0.5" value="6">
         </div>
-
         <label class="cbx-row cbx-toggle" style="margin-top:8px">
           <span class="cbx-sub">En haut</span>
           <input type="checkbox" id="cbx-notchTop">
@@ -83,7 +72,7 @@
         </div>
       </div>
 
-      <div class="cbx-group">
+      <div class="cbx-group cbx-step" data-step="3">
         <span class="cbx-label">Finition</span>
         <div class="cbx-swatches">
           <button class="cbx-sw"           data-finish="blanc"      style="--c:#F2F1EC" title="Blanc"></button>
@@ -99,6 +88,12 @@
         <div class="cbx-supp" data-out="supp">Supplément sur-mesure : 0,00 €</div>
         <div class="cbx-note">Au-delà de 130 cm cumulés (L+H+P)</div>
       </footer>
+
+      <div class="cbx-mob-nav">
+        <button class="cbx-mob-back" id="cbx-back">&#8592; Retour</button>
+        <div class="cbx-mob-price" data-out="supp-mob">0,00 €</div>
+        <button class="cbx-mob-next" id="cbx-next">Suivant</button>
+      </div>
     </aside>
   </div>
 </div>
@@ -203,20 +198,37 @@
 #cbx-cfg .cbx-supp{font-size:14px; font-weight:600; color:var(--olive); margin-top:4px}
 #cbx-cfg .cbx-note{font-size:11px; color:var(--muted); margin-top:2px}
 
-#cbx-cfg .cbx-price-overlay{
-  position:absolute; top:16px; right:16px; z-index:5;
-  display:flex; align-items:center; gap:12px;
-  background:rgba(255,255,255,.85); -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
-  border:1px solid var(--line); border-radius:12px; padding:10px 16px;
-  box-shadow:0 4px 16px rgba(0,0,0,.06);
-}
-#cbx-cfg .cbx-price-dims{font-size:13px; font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums}
-#cbx-cfg .cbx-price-tag{font-size:15px; font-weight:700; color:#2ea043; font-variant-numeric:tabular-nums}
+
+#cbx-cfg .cbx-mob-nav{display:none}
 
 @media (max-width:760px){
   #cbx-cfg .cbx-stage{flex-direction:column}
   #cbx-cfg .cbx-view{min-height:340px}
-  #cbx-cfg .cbx-panel{flex-basis:auto; border-left:none; border-top:1px solid var(--line); max-height:none}
+  #cbx-cfg .cbx-panel{
+    flex-basis:auto; border-left:none; border-top:1px solid var(--line);
+    max-height:none; display:flex!important; padding:14px 16px 70px;
+  }
+  #cbx-cfg .cbx-head{display:none}
+  #cbx-cfg .cbx-foot{display:none}
+  #cbx-cfg .cbx-step{display:none}
+  #cbx-cfg .cbx-step.is-active{display:flex}
+  #cbx-cfg .cbx-mob-nav{
+    display:flex; align-items:center; gap:8px;
+    position:fixed; bottom:0; left:0; right:0; z-index:100;
+    background:#fff; border-top:1px solid var(--line);
+    padding:10px 16px; box-shadow:0 -2px 12px rgba(0,0,0,.08);
+  }
+  #cbx-cfg .cbx-mob-back{
+    background:none; border:none; font:inherit; font-size:12px;
+    color:var(--muted); cursor:pointer; padding:6px 8px;
+  }
+  #cbx-cfg .cbx-mob-price{
+    flex:1; text-align:center; font-size:15px; font-weight:700; color:var(--olive);
+  }
+  #cbx-cfg .cbx-mob-next{
+    background:var(--olive); color:#fff; border:none; border-radius:10px;
+    font:inherit; font-size:14px; font-weight:600; padding:10px 20px; cursor:pointer;
+  }
 }
 
 /* ===== Mode VIEWER (intégration fiche produit) ===== */
@@ -253,7 +265,7 @@
 
   // ---- état ----
   var state = { L:35, H:75, P:16.6,
-    notch:true, nw:12, nh:6, nx:0,            // encoche bas (nx = distance bord gauche → côté gauche encoche)
+    notch:false, nw:12, nh:6, nx:0,            // encoche bas (nx = distance bord gauche → côté gauche encoche)
     notchTop:false, nwT:12, nhT:6, nxT:0,     // encoche haut
     finish:"bois", grainH:false, open:90, showDims:true };
   var T = 1.8; // épaisseur des panneaux (cm)
@@ -402,7 +414,7 @@
     notchDims(-H/2+T/2, state.notch, state.nw, state.nh, state.nx);
     notchDims( H/2-T/2, state.notchTop, state.nwT, state.nhT, state.nxT);
     (function(){var gold=0xc8a96e;
-      var uw=L-2*T-2.5, x1=-(L/2)+2.8, x2=(L/2)-1.9;
+      var intL=L-2*T, uw=(intL>60)?intL-5:intL-2.5, x1=-(L/2)+2.8, x2=(L/2)-1.9;
       var yC=H/2-7;
       dim([x1,yC,fz],[x2,yC,fz],[x1,yC+1.6,fz],[x1,yC-1.6,fz],[x2,yC+1.6,fz],[x2,yC-1.6,fz],'utile: '+fmt(uw),[(x1+x2)/2,yC-2.7,fz-3],gold);})();
     (function(){var gold=0xc8a96e;
@@ -590,9 +602,35 @@
   canvas.addEventListener("mousedown", onDown);
   window.addEventListener("mousemove", onMove);
   window.addEventListener("mouseup", onUp);
-  canvas.addEventListener("touchstart", onDown, {passive:true});
-  canvas.addEventListener("touchmove", function(e){ onMove(e); }, {passive:true});
-  canvas.addEventListener("touchend", onUp);
+  var lastTouchDist=0, lastTouchMid={x:0,y:0}, touching=0;
+  canvas.addEventListener("touchstart", function(e){
+    touching=e.touches.length;
+    if(touching===1){ onDown(e); }
+    else if(touching===2){
+      dragging=false;
+      auto=false;
+      var dx=e.touches[1].clientX-e.touches[0].clientX;
+      var dy=e.touches[1].clientY-e.touches[0].clientY;
+      lastTouchDist=Math.sqrt(dx*dx+dy*dy);
+      lastTouchMid={x:(e.touches[0].clientX+e.touches[1].clientX)/2, y:(e.touches[0].clientY+e.touches[1].clientY)/2};
+    }
+  }, {passive:true});
+  canvas.addEventListener("touchmove", function(e){
+    if(touching===1){ onMove(e); }
+    else if(touching===2 && e.touches.length===2){
+      e.preventDefault();
+      var dx=e.touches[1].clientX-e.touches[0].clientX;
+      var dy=e.touches[1].clientY-e.touches[0].clientY;
+      var dist=Math.sqrt(dx*dx+dy*dy);
+      var mid={x:(e.touches[0].clientX+e.touches[1].clientX)/2, y:(e.touches[0].clientY+e.touches[1].clientY)/2};
+      camera.position.z = Math.max(85, Math.min(260, camera.position.z - (dist-lastTouchDist)*0.3));
+      model.position.x += (mid.x-lastTouchMid.x)*0.08;
+      model.position.y -= (mid.y-lastTouchMid.y)*0.08;
+      lastTouchDist=dist;
+      lastTouchMid=mid;
+    }
+  }, {passive:false});
+  canvas.addEventListener("touchend", function(e){ touching=e.touches.length; onUp(); });
   canvas.addEventListener("wheel", function(e){
     e.preventDefault();
     camera.position.z = Math.max(85, Math.min(260, camera.position.z + e.deltaY*0.12));
@@ -629,8 +667,7 @@
     var total = state.L + state.H + state.P;
     var supp = Math.max(0, total - 130) * 1;
     out("supp").textContent = "Supplément sur-mesure : " + supp.toFixed(2).replace(".",",") + " €";
-    var s2 = out("summary2"); if(s2) s2.textContent = state.L+" × "+state.H+" × "+state.P+" cm";
-    var sp2 = out("supp2"); if(sp2) sp2.textContent = supp > 0 ? ("+" + supp.toFixed(2).replace(".",",") + " €") : "Inclus";
+    var mob = out("supp-mob"); if(mob) mob.textContent = supp > 0 ? ("+" + supp.toFixed(2).replace(".",",") + " €") : "Inclus";
   }
 
   var PRESETS = { "55":{L:35,H:55,P:16.6}, "75":{L:35,H:75,P:16.6}, "95":{L:35,H:95,P:16.6} };
@@ -692,6 +729,20 @@
       build();
     });
   });
+
+  // ---- Mobile step navigation ----
+  (function(){
+    var steps=root.querySelectorAll('.cbx-step'), cur=1, total=steps.length;
+    var btnNext=root.querySelector('#cbx-next'), btnBack=root.querySelector('#cbx-back');
+    function show(){
+      steps.forEach(function(s){ s.classList.toggle('is-active', parseInt(s.dataset.step)===cur); });
+      btnBack.style.visibility = cur===1 ? 'hidden' : 'visible';
+      btnNext.textContent = cur===total ? 'Valider' : 'Suivant';
+    }
+    btnNext.addEventListener('click',function(){ if(cur<total) cur++; show(); });
+    btnBack.addEventListener('click',function(){ if(cur>1) cur--; show(); });
+    show();
+  })();
 
   // ---- Pont avec les champs de dimensions du site Clim-Box ----
   function cbSiteDoc(){
