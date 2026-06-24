@@ -291,7 +291,7 @@
 
   var scene = new THREE.Scene();
   var camera = new THREE.PerspectiveCamera(35, 1, 0.1, 2000);
-  camera.position.set(0, 12, 150);
+  camera.position.set(0, 12, 190);
   camera.lookAt(0,0,0);
 
   scene.add(new THREE.HemisphereLight(0xffffff, 0x9a9a9a, 0.6));
@@ -623,7 +623,7 @@
       var dy=e.touches[1].clientY-e.touches[0].clientY;
       var dist=Math.sqrt(dx*dx+dy*dy);
       var mid={x:(e.touches[0].clientX+e.touches[1].clientX)/2, y:(e.touches[0].clientY+e.touches[1].clientY)/2};
-      camera.position.z = Math.max(85, Math.min(260, camera.position.z - (dist-lastTouchDist)*0.3));
+      camera.position.z = Math.max(110, Math.min(320, camera.position.z - (dist-lastTouchDist)*0.3));
       model.position.x += (mid.x-lastTouchMid.x)*0.08;
       model.position.y -= (mid.y-lastTouchMid.y)*0.08;
       lastTouchDist=dist;
@@ -633,7 +633,7 @@
   canvas.addEventListener("touchend", function(e){ touching=e.touches.length; onUp(); });
   canvas.addEventListener("wheel", function(e){
     e.preventDefault();
-    camera.position.z = Math.max(85, Math.min(260, camera.position.z + e.deltaY*0.12));
+    camera.position.z = Math.max(110, Math.min(320, camera.position.z + e.deltaY*0.12));
   }, {passive:false});
 
   // ---- resize ----
