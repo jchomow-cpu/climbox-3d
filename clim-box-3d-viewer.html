@@ -239,10 +239,16 @@
 
   // ---- état ----
   var state = { L:35, H:75, P:16.6,
-    notch:true, nw:12, nh:6,            // encoche bas
-    notchTop:false, nwT:12, nhT:6,      // encoche haut
+    notch:true, nw:12, nh:6, nx:0,            // encoche bas (nx = distance bord gauche → côté gauche encoche)
+    notchTop:false, nwT:12, nhT:6, nxT:0,     // encoche haut
     finish:"bois", grainH:false, open:90, showDims:true };
   var T = 1.8; // épaisseur des panneaux (cm)
+  // centre X d'une encoche selon la distance au bord gauche (sinon centrée)
+  function notchCenter(L,nwv,nxv){
+    var W=L-2*T-0.1, cnw=Math.min(nwv,W-2), hw=W/2, xc=0;
+    if(nxv!=null && nxv>0) xc=-hw+nxv+cnw/2;
+    return Math.max(-hw+cnw/2+0.3, Math.min(hw-cnw/2-0.3, xc));
+  }
 
   var FINISHES = {
     blanc:      { color:0xF2F1EC, rough:0.55, wood:false },
@@ -372,14 +378,15 @@
     dim([xr,-H/2,-P/2],[xr,-H/2,P/2],[L/2,-H/2,-P/2],[xr,-H/2,-P/2],[L/2,-H/2,P/2],[xr,-H/2,P/2],'P '+fmt(P),[xr+4,-H/2-4,0]);
     g.add(dashed([L/2,-H/2,-P/2],[xr,-H/2,-P/2],col)); g.add(dashed([L/2,-H/2,P/2],[xr,-H/2,P/2],col));
     // Cotes de la découpe (encoche passe-câble) en olive
-    function notchDims(yc,on,nwv,nhv){
+    function notchDims(yc,on,nwv,nhv,nxv){
       if(!on)return; var W=L-2*T,cnw=Math.min(nwv,W-2),cnh=Math.min(nhv,P-1),sgn=(yc<0)?-1:1,yL=yc+sgn*(off-0.5),zb=-P/2;
-      dim([-cnw/2,yL,zb],[cnw/2,yL,zb],[-cnw/2,yc,zb],[-cnw/2,yL,zb],[cnw/2,yc,zb],[cnw/2,yL,zb],'déc. '+fmt(cnw),[0,yL+sgn*2.7,zb],olv);
-      var xo=cnw/2+2.2;
-      dim([xo,yc,zb],[xo,yc,zb+cnh],[cnw/2,yc,zb],[xo,yc,zb],[cnw/2,yc,zb+cnh],[xo,yc,zb+cnh],fmt(cnh),[xo+2.6,yc+sgn*5,zb+cnh/2],olv);
+      var xc=notchCenter(L,nwv,nxv),xl=xc-cnw/2,xr2=xc+cnw/2;
+      dim([xl,yL,zb],[xr2,yL,zb],[xl,yc,zb],[xl,yL,zb],[xr2,yc,zb],[xr2,yL,zb],'déc. '+fmt(cnw),[xc,yL+sgn*2.7,zb],olv);
+      var xo=xr2+2.2;
+      dim([xo,yc,zb],[xo,yc,zb+cnh],[xr2,yc,zb],[xo,yc,zb],[xr2,yc,zb+cnh],[xo,yc,zb+cnh],fmt(cnh),[xo+2.6,yc+sgn*5,zb+cnh/2],olv);
     }
-    notchDims(-H/2+T/2, state.notch, state.nw, state.nh);
-    notchDims( H/2-T/2, state.notchTop, state.nwT, state.nhT);
+    notchDims(-H/2+T/2, state.notch, state.nw, state.nh, state.nx);
+    notchDims( H/2-T/2, state.notchTop, state.nwT, state.nhT, state.nxT);
     (function(){var gold=0xc8a96e, uw=Math.max(L-2.5,0), yC=H/2-HINGEFIT.edgeInset, x1=-uw/2, x2=uw/2;
       dim([x1,yC,fz],[x2,yC,fz],[x1,yC+1.6,fz],[x1,yC-1.6,fz],[x2,yC+1.6,fz],[x2,yC-1.6,fz],'utile: '+fmt(uw),[(x1+x2)/2,yC-2.7,fz-3],gold);})();
     (function(){var gold=0xc8a96e, uh=Math.max(H-2.5,0), ixb=L/2-T-4, yhaut=uh/2, ybas=-uh/2, zEq=-P/2+0.4;
@@ -402,15 +409,16 @@
     box(T, H, P,     -L/2 + T/2,    0,          0, mats.bodySide);  // côté gauche
     box(T, H, P,      L/2 - T/2,    0,          0, mats.bodySide);  // côté droit
     // haut & bas insérés ENTRE les côtés, avec encoche optionnelle À L'ARRIÈRE
-    function makeNotchPanelGeo(W,T,P,cnw,cnh){
+    function makeNotchPanelGeo(W,T,P,cnw,cnh,xc){
       var pos=[],idx=[],nrm=[],uv=[],hw=W/2,ht=T/2,hp=P/2;
+      xc=xc||0; var nl=xc-cnw/2,nr=xc+cnw/2;
       function v(x,y,z,nx,ny,nz){pos.push(x,y,z);nrm.push(nx,ny,nz);uv.push((x+hw)/W,(z+hp)/P);return pos.length/3-1;}
       function quad(a,b,c,d){idx.push(a,b,c,a,c,d);}
-      var rects=[[-hw,-cnw/2,-hp,hp],[cnw/2,hw,-hp,hp],[-cnw/2,cnw/2,-hp+cnh,hp]];
+      var rects=[[-hw,nl,-hp,hp],[nr,hw,-hp,hp],[nl,nr,-hp+cnh,hp]];
       rects.forEach(function(r){var x0=r[0],x1=r[1],z0=r[2],z1=r[3];
         var t0=v(x0,ht,z0,0,1,0),t1=v(x1,ht,z0,0,1,0),t2=v(x1,ht,z1,0,1,0),t3=v(x0,ht,z1,0,1,0);quad(t0,t3,t2,t1);
         var b0=v(x0,-ht,z0,0,-1,0),b1=v(x1,-ht,z0,0,-1,0),b2=v(x1,-ht,z1,0,-1,0),b3=v(x0,-ht,z1,0,-1,0);quad(b0,b1,b2,b3);});
-      var loop=[[-hw,hp],[hw,hp],[hw,-hp],[cnw/2,-hp],[cnw/2,-hp+cnh],[-cnw/2,-hp+cnh],[-cnw/2,-hp],[-hw,-hp]];
+      var loop=[[-hw,hp],[hw,hp],[hw,-hp],[nr,-hp],[nr,-hp+cnh],[nl,-hp+cnh],[nl,-hp],[-hw,-hp]];
       for(var i=0;i<loop.length;i++){var a=loop[i],b=loop[(i+1)%loop.length],ex=b[0]-a[0],ez=b[1]-a[1],ln=Math.hypot(ex,ez);if(ln<1e-6)continue;
         var nx=-ez/ln,nz=ex/ln,w0=v(a[0],-ht,a[1],nx,0,nz),w1=v(b[0],-ht,b[1],nx,0,nz),w2=v(b[0],ht,b[1],nx,0,nz),w3=v(a[0],ht,a[1],nx,0,nz);quad(w0,w1,w2,w3);}
       var g=new THREE.BufferGeometry();
@@ -418,21 +426,22 @@
       g.setAttribute('normal',new THREE.Float32BufferAttribute(nrm,3));
       g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
       g.setIndex(idx);return g;}
-    function notchedPanel(yc, on, nwv, nhv){
+    function notchedPanel(yc, on, nwv, nhv, nxv){
       var W = L - 2*T - 0.1;   // jeu 0,5mm de chaque côté
       if(on && nwv>0 && nhv>0){
         var cnw = Math.min(nwv, W - 2), cnh = Math.min(nhv, P - 1);
-        var m=new THREE.Mesh(makeNotchPanelGeo(W,T,P,cnw,cnh), mats.body); m.position.set(0,yc,0); cover.add(m);
+        var xc = notchCenter(L,nwv,nxv);
+        var m=new THREE.Mesh(makeNotchPanelGeo(W,T,P,cnw,cnh,xc), mats.body); m.position.set(0,yc,0); cover.add(m);
       } else {
         box(W, T, P, 0, yc, 0);
       }
     }
-    notchedPanel( H/2 - T/2, state.notchTop, state.nwT, state.nhT); // haut
-    notchedPanel(-H/2 + T/2, state.notch,    state.nw,  state.nh);  // bas
+    notchedPanel( H/2 - T/2, state.notchTop, state.nwT, state.nhT, state.nxT); // haut
+    notchedPanel(-H/2 + T/2, state.notch,    state.nw,  state.nh,  state.nx);  // bas
 
     // --- équerres RÉELLES d'accroche (en haut, à l'arrière) ---
     (function(){
-      var t=0.2, w=2.0, arm=2.5, ytop=H/2-T, zb=-P/2, off=0.3, cx=L/2 - T - 4;
+      var t=0.2, w=2.0, arm=2.5, ytop=H/2-T, zb=-P/2, off=0.3, cx=L/2 - 3;  // équerres à 3 cm des bords
       var holeMat=new THREE.MeshBasicMaterial({color:0x141414});
       function hole(px,py,pz,ax){
         var m=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.16,t+0.12,14), holeMat);
@@ -674,9 +683,9 @@
   function cbChk(doc,id){ var e=doc&&doc.getElementById(id); return !!(e&&e.checked); }
   var cbLastKey='';
   function cbApply(src){
-    var L,H,P,decH,decB,nwT,nhT,nw,nh;
+    var L,H,P,decH,decB,nwT,nhT,nw,nh,nxT,nxB;
     if(src){ // données reçues par postMessage
-      L=src.L; H=src.H; P=src.P; decH=!!src.decH; decB=!!src.decB; nwT=src.nwT; nhT=src.nhT; nw=src.nw; nh=src.nh;
+      L=src.L; H=src.H; P=src.P; decH=!!src.decH; decB=!!src.decB; nwT=src.nwT; nhT=src.nhT; nw=src.nw; nh=src.nh; nxT=src.nxT; nxB=src.nxB;
     } else {
       var doc=cbSiteDoc(); if(!doc) return;
       L=cbNum(doc,'propL'); H=cbNum(doc,'propH'); P=cbNum(doc,'propP');
@@ -685,11 +694,12 @@
       nw =cbNum(doc,'cbDecBasW');  nh =cbNum(doc,'cbDecBasD');
     }
     if(!(L>0&&H>0&&P>0)) return;                 // on attend les 3 dimensions
-    var key=[L,H,P,decH,decB,nwT,nhT,nw,nh].join('|');
+    if(nxT==null) nxT=state.nxT; if(nxB==null) nxB=state.nx;   // gardent la valeur si non fournie
+    var key=[L,H,P,decH,decB,nwT,nhT,nw,nh,nxT,nxB].join('|');
     if(key===cbLastKey) return; cbLastKey=key;
     state.L=Math.round(L*10)/10; state.H=Math.round(H*10)/10; state.P=Math.round(P*10)/10;
-    state.notchTop=!!decH; if(decH){ if(nwT>0)state.nwT=nwT; if(nhT>0)state.nhT=nhT; }
-    state.notch   =!!decB; if(decB){ if(nw >0)state.nw =nw;  if(nh >0)state.nh =nh;  }
+    state.notchTop=!!decH; if(decH){ if(nwT>0)state.nwT=nwT; if(nhT>0)state.nhT=nhT; } state.nxT=nxT;
+    state.notch   =!!decB; if(decB){ if(nw >0)state.nw =nw;  if(nh >0)state.nh =nh;  } state.nx=nxB;
     // refléter dans l'UI interne du configurateur (si présente)
     var eL=root.querySelector('#cbx-L'),eH=root.querySelector('#cbx-H'),eP=root.querySelector('#cbx-P');
     if(eL)eL.value=state.L; if(eH)eH.value=state.H; if(eP)eP.value=state.P;
