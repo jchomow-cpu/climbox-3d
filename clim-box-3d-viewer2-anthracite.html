@@ -294,10 +294,10 @@
   camera.position.set(0, 12, 190);
   camera.lookAt(0,0,0);
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x9a9a9a, 0.6));
-  var key = new THREE.DirectionalLight(0xffffff, 0.95); key.position.set(60,90,80); scene.add(key);
-  var fill = new THREE.DirectionalLight(0xffffff, 0.35); fill.position.set(-70,30,-40); scene.add(fill);
-  var rim = new THREE.DirectionalLight(0xffffff, 0.35); rim.position.set(0,40,-90); scene.add(rim);
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x9a9a9a, 0.4));
+  var key = new THREE.DirectionalLight(0xffffff, 0.65); key.position.set(60,90,80); scene.add(key);
+  var fill = new THREE.DirectionalLight(0xffffff, 0.22); fill.position.set(-70,30,-40); scene.add(fill);
+  var rim = new THREE.DirectionalLight(0xffffff, 0.22); rim.position.set(0,40,-90); scene.add(rim);
 
   var model = new THREE.Object3D();
   model.rotation.set(-0.18, -0.5, 0);
@@ -394,11 +394,11 @@
     var ix=L/2-T, iy=H/2-T;                 // faces intérieures (utile)
     // Largeur intérieure
     var yb=-H/2-off;
-    dim([-ix,yb,fz],[ix,yb,fz],[-ix,-iy,fz],[-ix,yb,fz],[ix,-iy,fz],[ix,yb,fz],'L '+fmt(L-2*T),[0,yb-2.9,fz]);
+    dim([-ix,yb,fz],[ix,yb,fz],[-ix,-iy,fz],[-ix,yb,fz],[ix,-iy,fz],[ix,yb,fz],'L '+fmt(L),[0,yb-2.9,fz]);
     g.add(dashed([-ix,-iy,fz],[-ix,yb,fz],col)); g.add(dashed([ix,-iy,fz],[ix,yb,fz],col));
     // Hauteur intérieure (à l'intérieur du cache)
     var xin=-(L/2-T)+5, zh=P/2-2;
-    dim([xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],'H '+fmt(H-2*T),[xin+4.5,0,zh-3]);
+    dim([xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],'H '+fmt(H),[xin+4.5,0,zh-3]);
     // Profondeur intérieure (caisson ouvert)
     var xr=L/2+off;
     dim([xr,-H/2,-P/2],[xr,-H/2,P/2],[L/2,-H/2,-P/2],[xr,-H/2,-P/2],[L/2,-H/2,P/2],[xr,-H/2,P/2],'P '+fmt(P),[xr+4,-H/2-4,0]);
@@ -414,13 +414,13 @@
     notchDims(-H/2+T/2, state.notch, state.nw, state.nh, state.nx);
     notchDims( H/2-T/2, state.notchTop, state.nwT, state.nhT, state.nxT);
     (function(){var gold=0xc8a96e;
-      var intL=L-2*T, uw=(intL>60)?intL-5:intL-2.5, x1=-(L/2)+2.8, x2=(L/2)-1.9;
+      var intL=L-2*T, uw=(L>60)?L-5:L-2.5, x1=-(L/2)+2.8, x2=(L/2)-1.9;
       var yC=H/2-7;
-      dim([x1,yC,fz],[x2,yC,fz],[x1,yC+1.6,fz],[x1,yC-1.6,fz],[x2,yC+1.6,fz],[x2,yC-1.6,fz],'utile: '+fmt(uw),[(x1+x2)/2,yC-2.7,fz-3],gold);})();
+      dim([x1,yC,fz],[x2,yC,fz],[x1,yC+1.6,fz],[x1,yC-1.6,fz],[x2,yC+1.6,fz],[x2,yC-1.6,fz],fmt(uw),[(x1+x2)/2,yC-2.7,fz-3],gold);})();
     (function(){var gold=0xc8a96e;
-      var ixb=L/2-T-2.4, zEq=-P/2+0.4;
-      var ybas=-(H/2-T), yhaut=(H/2-T)-2.5, uh=Math.max(yhaut-ybas,0);
-      dim([ixb,ybas,zEq],[ixb,yhaut,zEq],[ixb-1.6,ybas,zEq],[ixb+1.6,ybas,zEq],[ixb-1.6,yhaut,zEq],[ixb+1.6,yhaut,zEq],'utile: '+fmt(uh),[ixb-5,(ybas+yhaut)/2,zEq],gold);})();
+      var ixb=L/2-T-2.4+1, zEq=-P/2+0.4;
+      var ybas=-(H/2)+1.9, yhaut=(H/2)-4.4, uh=Math.max(yhaut-ybas,0);
+      dim([ixb,ybas,zEq],[ixb,yhaut,zEq],[ixb-1.6,ybas,zEq],[ixb+1.6,ybas,zEq],[ixb-1.6,yhaut,zEq],[ixb+1.6,yhaut,zEq],fmt(uh),[ixb-5,(ybas+yhaut)/2,zEq],gold);})();
     parent.add(g);}
   function build(){
     if(cover){ model.remove(cover); disposeGroup(cover); }
