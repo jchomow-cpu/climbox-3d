@@ -76,8 +76,8 @@
         <span class="cbx-label">Finition</span>
         <div class="cbx-swatches">
           <button class="cbx-sw"           data-finish="blanc"      style="--c:#F2F1EC" title="Blanc"></button>
-          <button class="cbx-sw is-active" data-finish="bois"       style="--c:#9c6b3f" title="Bois"></button>
-          <button class="cbx-sw"           data-finish="noir"       style="--c:#1B1B1B" title="Noir"></button>
+          <button class="cbx-sw" data-finish="bois"       style="--c:#9c6b3f" title="Bois"></button>
+          <button class="cbx-sw is-active" data-finish="noir"       style="--c:#1B1B1B" title="Noir"></button>
           <button class="cbx-sw"           data-finish="cachemire"  style="--c:#CEC2A8" title="Cachemire"></button>
           <button class="cbx-sw"           data-finish="anthracite" style="--c:#3A3D40" title="Anthracite"></button>
         </div>
@@ -267,7 +267,7 @@
   var state = { L:35, H:75, P:16.6,
     notch:false, nw:12, nh:6, nx:0,            // encoche bas (nx = distance bord gauche → côté gauche encoche)
     notchTop:false, nwT:12, nhT:6, nxT:0,     // encoche haut
-    finish:"bois", grainH:false, open:90, showDims:true };
+    finish:"noir", grainH:false, open:90, showDims:true };
   var T = 1.8; // épaisseur des panneaux (cm)
   // centre X d'une encoche selon la distance au bord gauche (sinon centrée)
   function notchCenter(L,nwv,nxv){
@@ -279,7 +279,7 @@
   var FINISHES = {
     blanc:      { color:0xF2F1EC, rough:0.55, wood:false },
     bois:       { color:0xa4794d, rough:0.62, wood:true  },
-    noir:       { color:0x1B1B1B, rough:0.45, wood:false },
+    noir:       { color:0x020202, rough:0.22, metal:0.08, wood:false },
     cachemire:  { color:0xCEC2A8, rough:0.6,  wood:false },
     anthracite: { color:0x3A3D40, rough:0.45, wood:false }
   };
@@ -419,7 +419,7 @@
       dim([x1,yC,fz],[x2,yC,fz],[x1,yC+1.6,fz],[x1,yC-1.6,fz],[x2,yC+1.6,fz],[x2,yC-1.6,fz],fmt(uw),[(x1+x2)/2,yC-2.7,fz-3],gold);})();
     (function(){var gold=0xc8a96e;
       var ixb=L/2-T-2.4+1, zEq=-P/2+0.4;
-      var ybas=-(H/2)+1.9, yhaut=(H/2)-4.4, uh=Math.max(yhaut-ybas,0);
+      var ybas=-(H/2)+1.9, yhaut=(H/2)-4.4, uh=H-2.5;
       dim([ixb,ybas,zEq],[ixb,yhaut,zEq],[ixb-1.6,ybas,zEq],[ixb+1.6,ybas,zEq],[ixb-1.6,yhaut,zEq],[ixb+1.6,yhaut,zEq],fmt(uh),[ixb-5,(ybas+yhaut)/2,zEq],gold);})();
     parent.add(g);}
   function build(){
@@ -538,6 +538,8 @@
     function makeDoor(width, hingeX, dir){
       // dir +1 : charnière à gauche · dir -1 : charnière à droite (s'ouvrent vers l'avant)
       var pivot = new THREE.Object3D();
+      pivot._isDoorPivot = true;
+      pivot._doorDir = dir;
       // trajectoire d'ouverture issue des points clés : pivote sur le chant + écartement interpolé
       var mv = doorMotion(openRad*180/Math.PI);
       pivot.position.set(hingeX + dir*mv.dx, 0, P/2 + 0.1 + mv.dz);
@@ -645,12 +647,93 @@
   if(window.ResizeObserver){ new ResizeObserver(resize).observe(viewEl); }
   window.addEventListener("resize", resize);
 
-  // ---- boucle ----
-  function loop(){
-    if(auto && !dragging) model.rotation.y += 0.0035;
-    renderer.render(scene, camera);
-    requestAnimationFrame(loop);
+  // ---- animation cinématique + rotation auto ----
+  var INTRO_DURATION = 5.5; // secondes
+  var introStartTime = null;
+  var introDone = false;
+
+  // Positions caméra pour l'intro
+  var CAM_START_Z = 420;   // loin au départ
+  var CAM_END_Z   = 190;   // position normale
+  var CAM_START_Y = 60;    // légèrement en hauteur
+  var CAM_END_Y   = 12;    // position normale
+
+  // Angle porte pour l'animation (en degrés)
+  var doorAnimAngle = 0; // 0 = fermé, state.open = ouvert
+
+  function easeInOutCubic(t){ return t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
+  function easeOutCubic(t){ return 1-Math.pow(1-t,3); }
+  function lerp(a,b,t){ return a+(b-a)*t; }
+
+  function getDoorPivots(){
+    var pivots=[];
+    model.traverse(function(o){ if(o._isDoorPivot) pivots.push(o); });
+    return pivots;
   }
+
+  function setDoorAngle(deg){
+    var rad = deg * Math.PI / 180;
+    model.traverse(function(o){
+      if(o._isDoorPivot){
+        o.rotation.y = -o._doorDir * rad;
+      }
+    });
+  }
+
+  function loop(timestamp){
+    requestAnimationFrame(loop);
+
+    if(!introDone){
+      if(!introStartTime) introStartTime = timestamp;
+      var elapsed = (timestamp - introStartTime) / 1000;
+      var t = Math.min(elapsed / INTRO_DURATION, 1);
+
+      // Phase 1 (0→0.45) : zoom in, porte fermée, légère rotation
+      if(t < 0.45){
+        var tp = easeOutCubic(t / 0.45);
+        camera.position.z = lerp(CAM_START_Z, CAM_END_Z, tp);
+        camera.position.y = lerp(CAM_START_Y, CAM_END_Y, tp);
+        model.rotation.y = lerp(0.5, 0.3, tp);
+        setDoorAngle(0); // porte fermée
+      }
+      // Phase 2 (0.45→0.55) : pause face avant porte fermée
+      else if(t < 0.55){
+        camera.position.z = CAM_END_Z;
+        camera.position.y = CAM_END_Y;
+        model.rotation.y = 0.3;
+        setDoorAngle(0);
+      }
+      // Phase 3 (0.55→0.80) : porte s'ouvre
+      else if(t < 0.80){
+        var tp = easeInOutCubic((t - 0.55) / 0.25);
+        model.rotation.y = lerp(0.3, 0.5, tp);
+        doorAnimAngle = lerp(0, state.open, tp);
+        setDoorAngle(doorAnimAngle);
+      }
+      // Phase 4 (0.80→1.0) : rotation lente pour admirer l'intérieur
+      else {
+        var tp = easeInOutCubic((t - 0.80) / 0.20);
+        model.rotation.y = lerp(0.5, -0.3, tp);
+        setDoorAngle(state.open);
+      }
+
+      if(t >= 1){
+        introDone = true;
+        setDoorAngle(state.open);
+        camera.position.z = CAM_END_Z;
+        camera.position.y = CAM_END_Y;
+      }
+    } else {
+      // Rotation auto lente après intro
+      if(!dragging && auto){
+        model.rotation.y += 0.004;
+      }
+    }
+
+    renderer.render(scene, camera);
+  }
+
+  // Pivots marqués directement dans makeDoor()
 
   // ---- UI ----
   function out(name){ return root.querySelector('[data-out="'+name+'"]'); }
@@ -796,6 +879,10 @@
 
   // ---- init ----
   setActivePreset("75");
-  resize(); build(); syncReadout(); loop();
+  camera.position.set(0, 60, 420); // position de départ pour l'intro
+  var _savedOpen = state.open; state.open = 0; // porte fermée pour l'intro
+  resize(); build(); syncReadout();
+  state.open = _savedOpen; // restaurer l'angle normal
+  requestAnimationFrame(loop);
 })();
 </script>
