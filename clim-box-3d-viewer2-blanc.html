@@ -406,11 +406,11 @@
     (function(){var gold=0xc8a96e;
       var intL=L-2*T, uw=(L>60)?L-5:L-2.5, x1=-(L/2)+2.8, x2=(L/2)-1.9;
       var yC=H/2-7;
-      dim([x1,yC,fz],[x2,yC,fz],[x1,yC+1.6,fz],[x1,yC-1.6,fz],[x2,yC+1.6,fz],[x2,yC-1.6,fz],fmt(uw),[(x1+x2)/2,yC+4,fz],gold);})();
-    // Hauteur utile (5cm plus bas que avant)
+      dim([x1,yC,fz],[x2,yC,fz],[x1,yC+1.6,fz],[x1,yC-1.6,fz],[x2,yC+1.6,fz],[x2,yC-1.6,fz],fmt(uw),[(x1+x2)/2,yC+1,fz],gold);})();
+    // Hauteur utile
     (function(){var gold=0xc8a96e;
       var ixb=L/2-T-2.4+1, zEq=-P/2+0.4;
-      var ybas=-(H/2)+1.9, yhaut=(H/2)-9.4, uh=H-2.5;
+      var ybas=-(H/2)+1.9, yhaut=(H/2)-4.4, uh=H-2.5;
       dim([ixb,ybas,zEq],[ixb,yhaut,zEq],[ixb-1.6,ybas,zEq],[ixb+1.6,ybas,zEq],[ixb-1.6,yhaut,zEq],[ixb+1.6,yhaut,zEq],fmt(uh),[ixb-5,(ybas+yhaut)/2,zEq],gold);})();
     // Cotes de la découpe (encoche passe-câble)
     function notchDims(yc,on,nwv,nhv,nxv){
@@ -727,11 +727,6 @@
         setDoorAngle(state.open);
         camera.position.z = CAM_END_Z;
         camera.position.y = CAM_END_Y;
-      }
-    } else {
-      // Rotation auto lente après intro
-      if(!dragging && auto){
-        model.rotation.y += 0.004;
       }
     }
 
