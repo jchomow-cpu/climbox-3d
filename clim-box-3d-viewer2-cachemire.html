@@ -578,7 +578,7 @@
       makeDoor(L, -L/2, +1);   addCabHinge(+1,+hy0); addCabHinge(+1,-hy0);   // porte unique
     }
 
-    if(state.showDims) addDimensions(cover, L, H, P);
+    if(state.showDims && state.dimsReceived) addDimensions(cover, L, H, P);
 
     model.add(cover);
 
@@ -843,6 +843,7 @@
       nw =cbNum(doc,'cbDecBasW');  nh =cbNum(doc,'cbDecBasD');
     }
     if(!(L>0&&H>0&&P>0)) return;                 // on attend les 3 dimensions
+    state.dimsReceived = true;
     if(nxT==null) nxT=state.nxT; if(nxB==null) nxB=state.nx;   // gardent la valeur si non fournie
     var key=[L,H,P,decH,decB,nwT,nhT,nw,nh,nxT,nxB].join('|');
     if(key===cbLastKey) return; cbLastKey=key;
