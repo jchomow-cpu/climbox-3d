@@ -392,7 +392,17 @@
       tick(p1);tick(p2);
       var lb=makeDimLabel(txt);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
     var ix=L/2-T, iy=H/2-T;
-    // Largeur utile (trait + chiffre AU-DESSUS)
+    // Largeur — trait seul, sans label
+    var yb=-H/2-off;
+    dim([-ix,yb,fz],[ix,yb,fz],[-ix,-iy,fz],[-ix,yb,fz],[ix,-iy,fz],[ix,yb,fz],'',[0,yb-2.9,fz]);
+    g.add(dashed([-ix,-iy,fz],[-ix,yb,fz],col)); g.add(dashed([ix,-iy,fz],[ix,yb,fz],col));
+    // Hauteur — trait seul, sans label
+    var xin=-(L/2-T)+5, zh=P/2-2;
+    dim([xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],'',[xin+4.5,0,zh-3]);
+    // Profondeur — trait seul, sans label
+    var xr=L/2+off;
+    dim([xr,-H/2,-P/2],[xr,-H/2,P/2],[L/2,-H/2,-P/2],[xr,-H/2,-P/2],[L/2,-H/2,P/2],[xr,-H/2,P/2],'',[xr+4,-H/2-4,0]);
+    g.add(dashed([L/2,-H/2,-P/2],[xr,-H/2,-P/2],col)); g.add(dashed([L/2,-H/2,P/2],[xr,-H/2,P/2],col));
     (function(){var gold=0xc8a96e;
       var intL=L-2*T, uw=(L>60)?L-5:L-2.5, x1=-(L/2)+2.8, x2=(L/2)-1.9;
       var yC=H/2-7;
