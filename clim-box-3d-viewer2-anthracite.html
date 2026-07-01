@@ -394,14 +394,14 @@
     var ix=L/2-T, iy=H/2-T;                 // faces intérieures (utile)
     // Largeur intérieure
     var yb=-H/2-off;
-    dim([-ix,yb,fz],[ix,yb,fz],[-ix,-iy,fz],[-ix,yb,fz],[ix,-iy,fz],[ix,yb,fz],'L '+fmt(L),[0,yb-2.9,fz]);
+    dim([-ix,yb,fz],[ix,yb,fz],[-ix,-iy,fz],[-ix,yb,fz],[ix,-iy,fz],[ix,yb,fz],fmt(L),[0,yb-2.9,fz]);
     g.add(dashed([-ix,-iy,fz],[-ix,yb,fz],col)); g.add(dashed([ix,-iy,fz],[ix,yb,fz],col));
     // Hauteur intérieure (à l'intérieur du cache)
     var xin=-(L/2-T)+5, zh=P/2-2;
-    dim([xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],'H '+fmt(H),[xin+4.5,0,zh-3]);
+    dim([xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],fmt(H),[xin+4.5,0,zh-3]);
     // Profondeur intérieure (caisson ouvert)
     var xr=L/2+off;
-    dim([xr,-H/2,-P/2],[xr,-H/2,P/2],[L/2,-H/2,-P/2],[xr,-H/2,-P/2],[L/2,-H/2,P/2],[xr,-H/2,P/2],'P '+fmt(P),[xr+4,-H/2-4,0]);
+    dim([xr,-H/2,-P/2],[xr,-H/2,P/2],[L/2,-H/2,-P/2],[xr,-H/2,-P/2],[L/2,-H/2,P/2],[xr,-H/2,P/2],fmt(P),[xr+4,-H/2-4,0]);
     g.add(dashed([L/2,-H/2,-P/2],[xr,-H/2,-P/2],col)); g.add(dashed([L/2,-H/2,P/2],[xr,-H/2,P/2],col));
     // Cotes de la découpe (encoche passe-câble) en olive
     function notchDims(yc,on,nwv,nhv,nxv){
@@ -414,9 +414,9 @@
     notchDims(-H/2+T/2, state.notch, state.nw, state.nh, state.nx);
     notchDims( H/2-T/2, state.notchTop, state.nwT, state.nhT, state.nxT);
     (function(){var gold=0xc8a96e;
-      var intL=L-2*T, uw=(L>60)?L-5:L-2.5, x1=-(L/2)+2.8, x2=(L/2)-1.9;
+      var intL=L-2*T, uw=(L>60)?L-5:L-2.5, x1=(L>60)?-(L/2)+2.8:-(L/2)+2.8, x2=(L>60)?(L/2)-2.9:(L/2)-1.9;
       var yC=H/2-7;
-      dim([x1,yC,fz],[x2,yC,fz],[x1,yC+1.6,fz],[x1,yC-1.6,fz],[x2,yC+1.6,fz],[x2,yC-1.6,fz],fmt(uw),[(x1+x2)/2,yC-2.7,fz-3],gold);})();
+      dim([x1,yC,fz],[x2,yC,fz],[x1,yC+1.6,fz],[x1,yC-1.6,fz],[x2,yC+1.6,fz],[x2,yC-1.6,fz],fmt(uw),[(x1+x2)/2,yC+1,fz],gold);})();
     (function(){var gold=0xc8a96e;
       var ixb=L/2-T-2.4+1, zEq=-P/2+0.4;
       var ybas=-(H/2)+1.9, yhaut=(H/2)-4.4, uh=Math.max(yhaut-ybas,0);
@@ -645,11 +645,76 @@
   if(window.ResizeObserver){ new ResizeObserver(resize).observe(viewEl); }
   window.addEventListener("resize", resize);
 
-  // ---- boucle ----
-  function loop(){
-    if(auto && !dragging) model.rotation.y += 0.0035;
-    renderer.render(scene, camera);
+  // ---- animation cinématique ----
+  var INTRO_DURATION = 5.5;
+  var introStartTime = null;
+  var introDone = false;
+
+  var CAM_START_Z = 420;
+  var CAM_END_Z   = 190;
+  var CAM_START_Y = 60;
+  var CAM_END_Y   = 12;
+
+  var doorAnimAngle = 0;
+
+  function easeInOutCubic(t){ return t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; }
+  function easeOutCubic(t){ return 1-Math.pow(1-t,3); }
+  function lerp(a,b,t){ return a+(b-a)*t; }
+
+  function setDoorAngle(deg){
+    var rad = deg * Math.PI / 180;
+    var mv = doorMotion(deg);
+    model.traverse(function(o){
+      if(o._isDoorPivot){
+        o.rotation.y = -o._doorDir * rad;
+        var hingeX = o._doorDir > 0 ? -state.L/2 : state.L/2;
+        o.position.set(hingeX + o._doorDir*mv.dx, 0, state.P/2 + 0.1 + mv.dz);
+      }
+    });
+  }
+
+  function loop(timestamp){
     requestAnimationFrame(loop);
+
+    if(!introDone){
+      if(!introStartTime) introStartTime = timestamp;
+      var elapsed = (timestamp - introStartTime) / 1000;
+      var t = Math.min(elapsed / INTRO_DURATION, 1);
+
+      if(t < 0.45){
+        var tp = easeOutCubic(t / 0.45);
+        camera.position.z = lerp(CAM_START_Z, CAM_END_Z, tp);
+        camera.position.y = lerp(CAM_START_Y, CAM_END_Y, tp);
+        model.rotation.y = lerp(0.5, 0.3, tp);
+        setDoorAngle(0);
+      }
+      else if(t < 0.55){
+        camera.position.z = CAM_END_Z;
+        camera.position.y = CAM_END_Y;
+        model.rotation.y = 0.3;
+        setDoorAngle(0);
+      }
+      else if(t < 0.80){
+        var tp = easeInOutCubic((t - 0.55) / 0.25);
+        model.rotation.y = lerp(0.3, 0.5, tp);
+        doorAnimAngle = lerp(0, state.open, tp);
+        setDoorAngle(doorAnimAngle);
+      }
+      else {
+        var tp = easeInOutCubic((t - 0.80) / 0.20);
+        model.rotation.y = lerp(0.5, -0.3, tp);
+        setDoorAngle(state.open);
+      }
+
+      if(t >= 1){
+        introDone = true;
+        setDoorAngle(state.open);
+        camera.position.z = CAM_END_Z;
+        camera.position.y = CAM_END_Y;
+      }
+    }
+
+    renderer.render(scene, camera);
   }
 
   // ---- UI ----
@@ -796,6 +861,9 @@
 
   // ---- init ----
   setActivePreset("75");
-  resize(); build(); syncReadout(); loop();
+  camera.position.set(0, 60, 420);
+  resize(); build(); syncReadout();
+  setDoorAngle(0);
+  requestAnimationFrame(loop);
 })();
 </script>
