@@ -392,21 +392,21 @@
       tick(p1);tick(p2);
       var lb=makeDimLabel(txt);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
     var ix=L/2-T, iy=H/2-T;
-    // Largeur — trait seul, sans label
+    // Largeur
     var yb=-H/2-off;
-    dim([-ix,yb,fz],[ix,yb,fz],[-ix,-iy,fz],[-ix,yb,fz],[ix,-iy,fz],[ix,yb,fz],'',[0,yb-2.9,fz]);
+    dim([-ix,yb,fz],[ix,yb,fz],[-ix,-iy,fz],[-ix,yb,fz],[ix,-iy,fz],[ix,yb,fz],fmt(L),[0,yb-2.9,fz]);
     g.add(dashed([-ix,-iy,fz],[-ix,yb,fz],col)); g.add(dashed([ix,-iy,fz],[ix,yb,fz],col));
-    // Hauteur — trait seul, sans label
+    // Hauteur
     var xin=-(L/2-T)+5, zh=P/2-2;
-    dim([xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],'',[xin+4.5,0,zh-3]);
-    // Profondeur — trait seul, sans label
+    dim([xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],fmt(H),[xin+4.5,0,zh-3]);
+    // Profondeur
     var xr=L/2+off;
-    dim([xr,-H/2,-P/2],[xr,-H/2,P/2],[L/2,-H/2,-P/2],[xr,-H/2,-P/2],[L/2,-H/2,P/2],[xr,-H/2,P/2],'',[xr+4,-H/2-4,0]);
+    dim([xr,-H/2,-P/2],[xr,-H/2,P/2],[L/2,-H/2,-P/2],[xr,-H/2,-P/2],[L/2,-H/2,P/2],[xr,-H/2,P/2],fmt(P),[xr+4,-H/2-4,0]);
     g.add(dashed([L/2,-H/2,-P/2],[xr,-H/2,-P/2],col)); g.add(dashed([L/2,-H/2,P/2],[xr,-H/2,P/2],col));
     (function(){var gold=0xc8a96e;
       var intL=L-2*T, uw=(L>60)?L-5:L-2.5, x1=-(L/2)+2.8, x2=(L/2)-1.9;
       var yC=H/2-7;
-      dim([x1,yC,fz],[x2,yC,fz],[x1,yC+1.6,fz],[x1,yC-1.6,fz],[x2,yC+1.6,fz],[x2,yC-1.6,fz],fmt(uw),[(x1+x2)/2,yC+2.5,fz-3],gold);})();
+      dim([x1,yC,fz],[x2,yC,fz],[x1,yC+1.6,fz],[x1,yC-1.6,fz],[x2,yC+1.6,fz],[x2,yC-1.6,fz],fmt(uw),[(x1+x2)/2,yC+4,fz],gold);})();
     // Hauteur utile (5cm plus bas que avant)
     (function(){var gold=0xc8a96e;
       var ixb=L/2-T-2.4+1, zEq=-P/2+0.4;
@@ -886,9 +886,8 @@
   // ---- init ----
   setActivePreset("75");
   camera.position.set(0, 60, 420); // position de départ pour l'intro
-  var _savedOpen = state.open; state.open = 0; // porte fermée pour l'intro
   resize(); build(); syncReadout();
-  state.open = _savedOpen; // restaurer l'angle normal
+  setDoorAngle(0);
   requestAnimationFrame(loop);
 })();
 </script>
