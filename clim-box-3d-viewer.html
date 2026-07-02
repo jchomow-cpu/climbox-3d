@@ -267,7 +267,8 @@
   var state = { L:35, H:75, P:16.6,
     notch:false, nw:12, nh:6, nx:0,            // encoche bas (nx = distance bord gauche → côté gauche encoche)
     notchTop:false, nwT:12, nhT:6, nxT:0,     // encoche haut
-    finish:"bois", grainH:false, open:90, showDims:true };
+    finish:"bois", grainH:false, open:90, showDims:true,
+    dimsReceived:false };                      // cotes masquées tant que le client n'a pas saisi ses dimensions
   var T = 1.8; // épaisseur des panneaux (cm)
   // centre X d'une encoche selon la distance au bord gauche (sinon centrée)
   function notchCenter(L,nwv,nxv){
@@ -578,7 +579,11 @@
       makeDoor(L, -L/2, +1);   addCabHinge(+1,+hy0); addCabHinge(+1,-hy0);   // porte unique
     }
 
-    if(state.showDims) addDimensions(cover, L, H, P);
+    if(state.showDims && state.dimsReceived) addDimensions(cover, L, H, P);
+
+    // le switch "Cotes" n'apparaît que lorsque le client a saisi ses dimensions
+    var cbxTgl = root.querySelector(".cbx-bar-toggle");
+    if(cbxTgl) cbxTgl.style.display = state.dimsReceived ? "" : "none";
 
     model.add(cover);
 
@@ -760,6 +765,7 @@
       setActivePreset(key);
       if(PRESETS[key]){
         state.L=PRESETS[key].L; state.H=PRESETS[key].H; state.P=PRESETS[key].P;
+        state.dimsReceived = true;             // le client a choisi un format → on affiche les cotes
         root.querySelector("#cbx-L").value=state.L;
         root.querySelector("#cbx-H").value=state.H;
         root.querySelector("#cbx-P").value=state.P;
@@ -771,6 +777,7 @@
   function bindRange(id, prop){
     root.querySelector(id).addEventListener("input", function(e){
       state[prop] = parseFloat(e.target.value);
+      state.dimsReceived = true;               // le client a saisi sa propre dimension
       setActivePreset("custom");
       build(); syncReadout();
     });
@@ -831,6 +838,7 @@
   function cbNum(doc,id){ var el=doc&&doc.getElementById(id); if(!el) return NaN; var v=parseFloat(String(el.value).replace(',','.')); return isNaN(v)?NaN:v; }
   function cbChk(doc,id){ var e=doc&&doc.getElementById(id); return !!(e&&e.checked); }
   var cbLastKey='';
+  var cbBaselineDims='';   // dimensions présentes dans les champs du site AU CHARGEMENT (valeurs par défaut)
   function cbApply(src){
     var L,H,P,decH,decB,nwT,nhT,nw,nh,nxT,nxB;
     if(src){ // données reçues par postMessage
@@ -845,7 +853,12 @@
     if(!(L>0&&H>0&&P>0)) return;                 // on attend les 3 dimensions
     if(nxT==null) nxT=state.nxT; if(nxB==null) nxB=state.nx;   // gardent la valeur si non fournie
     var key=[L,H,P,decH,decB,nwT,nhT,nw,nh,nxT,nxB].join('|');
-    if(key===cbLastKey) return; cbLastKey=key;
+    if(key===cbLastKey) return;
+    var cbFirstRead = (cbLastKey==='');
+    cbLastKey=key;
+    // La 1re lecture au chargement correspond aux valeurs par défaut du site : pas une saisie client.
+    // Toute modification ultérieure (ou des valeurs différentes du défaut) = saisie client → cotes visibles.
+    if(!(cbFirstRead && [L,H,P].join('|')===cbBaselineDims)) state.dimsReceived = true;
     state.L=Math.round(L*10)/10; state.H=Math.round(H*10)/10; state.P=Math.round(P*10)/10;
     state.notchTop=!!decH; if(decH){ if(nwT>0)state.nwT=nwT; if(nhT>0)state.nhT=nhT; } state.nxT=nxT;
     state.notch   =!!decB; if(decB){ if(nw >0)state.nw =nw;  if(nh >0)state.nh =nh;  } state.nx=nxB;
@@ -859,6 +872,11 @@
   }
   (function cbBridgeInit(){
     var doc=cbSiteDoc();
+    // mémorise les valeurs par défaut des champs pour ne pas les confondre avec une saisie client
+    if(doc){
+      var bL=cbNum(doc,'propL'), bH=cbNum(doc,'propH'), bP=cbNum(doc,'propP');
+      if(bL>0&&bH>0&&bP>0) cbBaselineDims=[bL,bH,bP].join('|');
+    }
     if(doc){
       ['cbInputH','cbInputL','cbInputP','cbDecHautW','cbDecHautD','cbDecBasW','cbDecBasD'].forEach(function(id){
         var e=doc.getElementById(id); if(e) e.addEventListener('input', function(){ setTimeout(function(){cbApply();},0); });
