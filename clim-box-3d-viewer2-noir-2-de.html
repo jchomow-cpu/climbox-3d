@@ -407,7 +407,7 @@
     function notchDims(yc,on,nwv,nhv,nxv){
       if(!on)return; var W=L-2*T,cnw=Math.min(nwv,W-2),cnh=Math.min(nhv,P-1),sgn=(yc<0)?-1:1,yL=yc+sgn*(off-0.5),zb=-P/2;
       var xc=notchCenter(L,nwv,nxv),xl=xc-cnw/2,xr2=xc+cnw/2;
-      dim([xl,yL,zb],[xr2,yL,zb],[xl,yc,zb],[xl,yL,zb],[xr2,yc,zb],[xr2,yL,zb],'déc. '+fmt(cnw),[xc,yL+sgn*2.7,zb],olv);
+      dim([xl,yL,zb],[xr2,yL,zb],[xl,yc,zb],[xl,yL,zb],[xr2,yc,zb],[xr2,yL,zb],'Aussp. '+fmt(cnw),[xc,yL+sgn*2.7,zb],olv);
       var xo=xr2+2.2;
       dim([xo,yc,zb],[xo,yc,zb+cnh],[xr2,yc,zb],[xo,yc,zb],[xr2,yc,zb+cnh],[xo,yc,zb+cnh],fmt(cnh),[xo+2.6,yc+sgn*5,zb+cnh/2],olv);
     }
