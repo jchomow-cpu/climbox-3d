@@ -271,7 +271,7 @@
     g.add(dashed([hs*W/2,-H/2,fz],[xr,-H/2,fz],col)); g.add(dashed([hs*W/2,H/2,fz],[xr,H/2,fz],col));
     var lh=makeDimLabel(fmtMm(H)); lh.position.set(xr+hs*3.2, 0, fz); g.add(lh);
     // Cotes des perçages charnières — en bleu, sur la face intérieure (arrière)
-    if(holes && holes.length===2){
+    if(holes && holes.length===2 && !state.hideHingeCotes){
       var zb=-T/2-0.06, zLab=-T/2-2.5, BLUE_BG='rgba(74,127,181,0.94)';
       var hx=holes[0].x, yTop=holes[0].y, yBot=holes[1].y;
       var edgeX=(hx>=0? 1 : -1)*W/2;
@@ -486,7 +486,8 @@
     var hinge = !!d.hinge;
     var side = (d.side==='right') ? 'right' : 'left';
     var top = parseFloat(d.top)||0, bot = parseFloat(d.bot)||0, ins = parseFloat(d.ins)||0;
-    var key = [w,h,grain,hinge,side,top,bot,ins].join('|');
+    var hideHingeCotes = !!d.hideHingeCotes;
+    var key = [w,h,grain,hinge,side,top,bot,ins,hideHingeCotes].join('|');
     if(key===lastKey) return;
     lastKey = key;
     var prevHinge = state.hinge;
@@ -495,6 +496,7 @@
     state.grain = grain;
     state.hinge = hinge; state.side = side;
     state.topMm = top; state.botMm = bot; state.insMm = ins;
+    state.hideHingeCotes = hideHingeCotes;  // masque les cotes bleues des charnières tant que non réglables
     state.dimsReceived = true;
     // perçage activé/désactivé → tourner vers la face intérieure / revenir de face
     if(hinge !== prevHinge){
