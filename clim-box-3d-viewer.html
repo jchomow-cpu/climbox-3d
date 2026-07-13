@@ -579,7 +579,7 @@
       makeDoor(L, -L/2, +1);   addCabHinge(+1,+hy0); addCabHinge(+1,-hy0);   // porte unique
     }
 
-    if(state.showDims) addDimensions(cover, L, H, P);
+    if(state.showDims && state.dimsReceived) addDimensions(cover, L, H, P);
 
     model.add(cover);
 
@@ -700,46 +700,40 @@
       var elapsed = (timestamp - introStartTime) / 1000;
       var t = Math.min(elapsed / INTRO_DURATION, 1);
 
-      // Phase 1 (0→0.4) : zoom in caméra
-      if(t < 0.4){
-        var tp = easeOutCubic(t / 0.4);
+      // Phase 1 (0→0.45) : zoom in, porte fermée, légère rotation
+      if(t < 0.45){
+        var tp = easeOutCubic(t / 0.45);
         camera.position.z = lerp(CAM_START_Z, CAM_END_Z, tp);
         camera.position.y = lerp(CAM_START_Y, CAM_END_Y, tp);
-        model.rotation.y = lerp(-0.3, 0.4, tp);
+        model.rotation.y = lerp(0.5, 0.3, tp);
+        setDoorAngle(0); // porte fermée
       }
-      // Phase 2 (0.4→0.65) : rotation 3/4 + porte qui s'ouvre
-      else if(t < 0.65){
-        var tp = easeInOutCubic((t - 0.4) / 0.25);
+      // Phase 2 (0.45→0.55) : pause face avant porte fermée
+      else if(t < 0.55){
         camera.position.z = CAM_END_Z;
         camera.position.y = CAM_END_Y;
-        model.rotation.y = lerp(0.4, 0.6, tp);
+        model.rotation.y = 0.3;
+        setDoorAngle(0);
+      }
+      // Phase 3 (0.55→0.80) : porte s'ouvre
+      else if(t < 0.80){
+        var tp = easeInOutCubic((t - 0.55) / 0.25);
+        model.rotation.y = lerp(0.3, 0.5, tp);
         doorAnimAngle = lerp(0, state.open, tp);
         setDoorAngle(doorAnimAngle);
       }
-      // Phase 3 (0.65→0.85) : rotation lente pour admirer
-      else if(t < 0.85){
-        var tp = (t - 0.65) / 0.2;
-        model.rotation.y = lerp(0.6, -0.4, easeInOutCubic(tp));
-      }
-      // Phase 4 (0.85→1) : revenir position de départ, porte se referme
+      // Phase 4 (0.80→1.0) : rotation lente pour admirer l'intérieur
       else {
-        var tp = easeInOutCubic((t - 0.85) / 0.15);
-        model.rotation.y = lerp(-0.4, 0, tp);
-        doorAnimAngle = lerp(state.open, 0, tp);
-        setDoorAngle(doorAnimAngle);
+        var tp = easeInOutCubic((t - 0.80) / 0.20);
+        model.rotation.y = lerp(0.5, -0.3, tp);
+        setDoorAngle(state.open);
       }
 
       if(t >= 1){
         introDone = true;
-        setDoorAngle(state.open); // position finale normale
-        model.rotation.y = 0;
+        setDoorAngle(state.open);
         camera.position.z = CAM_END_Z;
         camera.position.y = CAM_END_Y;
-      }
-    } else {
-      // Rotation auto lente après intro
-      if(!dragging && auto){
-        model.rotation.y += 0.004;
       }
     }
 
@@ -861,6 +855,7 @@
       nw =cbNum(doc,'cbDecBasW');  nh =cbNum(doc,'cbDecBasD');
     }
     if(!(L>0&&H>0&&P>0)) return;                 // on attend les 3 dimensions
+    state.dimsReceived = true;
     if(nxT==null) nxT=state.nxT; if(nxB==null) nxB=state.nx;   // gardent la valeur si non fournie
     var key=[L,H,P,decH,decB,nwT,nhT,nw,nh,nxT,nxB].join('|');
     if(key===cbLastKey) return; cbLastKey=key;
