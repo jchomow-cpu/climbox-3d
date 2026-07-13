@@ -78,8 +78,8 @@
           <button class="cbx-sw"           data-finish="blanc"      style="--c:#F2F1EC" title="Blanc"></button>
           <button class="cbx-sw is-active" data-finish="bois"       style="--c:#9c6b3f" title="Bois"></button>
           <button class="cbx-sw"           data-finish="noir"       style="--c:#1B1B1B" title="Noir"></button>
-          <button class="cbx-sw"           data-finish="cachemire"  style="--c:#CEC2A8" title="Cachemire"></button>
-          <button class="cbx-sw"           data-finish="anthracite" style="--c:#3A3D40" title="Anthracite"></button>
+          <button class="cbx-sw"           data-finish="cachemire"  style="--c:#A89878" title="Cachemire"></button>
+          <button class="cbx-sw"           data-finish="anthracite" style="--c:#0A0B0C" title="Anthracite"></button>
         </div>
       </div>
 
@@ -267,8 +267,7 @@
   var state = { L:35, H:75, P:16.6,
     notch:false, nw:12, nh:6, nx:0,            // encoche bas (nx = distance bord gauche → côté gauche encoche)
     notchTop:false, nwT:12, nhT:6, nxT:0,     // encoche haut
-    finish:"bois", grainH:false, open:90, showDims:true,
-    dimsReceived:false };                      // cotes masquées tant que le client n'a pas saisi ses dimensions
+    finish:"bois", grainH:false, open:90, showDims:true };
   var T = 1.8; // épaisseur des panneaux (cm)
   // centre X d'une encoche selon la distance au bord gauche (sinon centrée)
   function notchCenter(L,nwv,nxv){
@@ -281,8 +280,8 @@
     blanc:      { color:0xF2F1EC, rough:0.55, wood:false },
     bois:       { color:0xa4794d, rough:0.62, wood:true  },
     noir:       { color:0x1B1B1B, rough:0.45, wood:false },
-    cachemire:  { color:0xCEC2A8, rough:0.6,  wood:false },
-    anthracite: { color:0x3A3D40, rough:0.45, wood:false }
+    cachemire:  { color:0xA89878, rough:0.6,  wood:false },
+    anthracite: { color:0x0A0B0C, rough:0.45, wood:false }
   };
 
   // ---- scène ----
@@ -395,14 +394,14 @@
     var ix=L/2-T, iy=H/2-T;                 // faces intérieures (utile)
     // Largeur intérieure
     var yb=-H/2-off;
-    dim([-ix,yb,fz],[ix,yb,fz],[-ix,-iy,fz],[-ix,yb,fz],[ix,-iy,fz],[ix,yb,fz],fmt(L),[0,yb-2.9,fz]);
+    dim([-ix,yb,fz],[ix,yb,fz],[-ix,-iy,fz],[-ix,yb,fz],[ix,-iy,fz],[ix,yb,fz],'L '+fmt(L),[0,yb-2.9,fz]);
     g.add(dashed([-ix,-iy,fz],[-ix,yb,fz],col)); g.add(dashed([ix,-iy,fz],[ix,yb,fz],col));
     // Hauteur intérieure (à l'intérieur du cache)
     var xin=-(L/2-T)+5, zh=P/2-2;
-    dim([xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],fmt(H),[xin+4.5,0,zh-3]);
+    dim([xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],'H '+fmt(H),[xin+4.5,0,zh-3]);
     // Profondeur intérieure (caisson ouvert)
     var xr=L/2+off;
-    dim([xr,-H/2,-P/2],[xr,-H/2,P/2],[L/2,-H/2,-P/2],[xr,-H/2,-P/2],[L/2,-H/2,P/2],[xr,-H/2,P/2],fmt(P),[xr+4,-H/2-4,0]);
+    dim([xr,-H/2,-P/2],[xr,-H/2,P/2],[L/2,-H/2,-P/2],[xr,-H/2,-P/2],[L/2,-H/2,P/2],[xr,-H/2,P/2],'P '+fmt(P),[xr+4,-H/2-4,0]);
     g.add(dashed([L/2,-H/2,-P/2],[xr,-H/2,-P/2],col)); g.add(dashed([L/2,-H/2,P/2],[xr,-H/2,P/2],col));
     // Cotes de la découpe (encoche passe-câble) en olive
     function notchDims(yc,on,nwv,nhv,nxv){
@@ -415,12 +414,12 @@
     notchDims(-H/2+T/2, state.notch, state.nw, state.nh, state.nx);
     notchDims( H/2-T/2, state.notchTop, state.nwT, state.nhT, state.nxT);
     (function(){var gold=0xc8a96e;
-      var intL=L-2*T, uw=(L>60)?L-5:L-2.5, x1=(L>60)?-(L/2)+2.8:-(L/2)+2.8, x2=(L>60)?(L/2)-2.9:(L/2)-1.9;
+      var intL=L-2*T, uw=(L>60)?L-5:L-2.5, x1=-(L/2)+2.8, x2=(L/2)-1.9;
       var yC=H/2-7;
-      dim([x1,yC,fz],[x2,yC,fz],[x1,yC+1.6,fz],[x1,yC-1.6,fz],[x2,yC+1.6,fz],[x2,yC-1.6,fz],fmt(uw),[(x1+x2)/2,yC+1,fz],gold);})();
+      dim([x1,yC,fz],[x2,yC,fz],[x1,yC+1.6,fz],[x1,yC-1.6,fz],[x2,yC+1.6,fz],[x2,yC-1.6,fz],fmt(uw),[(x1+x2)/2,yC-2.7,fz-3],gold);})();
     (function(){var gold=0xc8a96e;
       var ixb=L/2-T-2.4+1, zEq=-P/2+0.4;
-      var ybas=-(H/2)+1.9, yhaut=(H/2)-4.4, uh=H-2.5;
+      var ybas=-(H/2)+1.9, yhaut=(H/2)-4.4, uh=Math.max(yhaut-ybas,0);
       dim([ixb,ybas,zEq],[ixb,yhaut,zEq],[ixb-1.6,ybas,zEq],[ixb+1.6,ybas,zEq],[ixb-1.6,yhaut,zEq],[ixb+1.6,yhaut,zEq],fmt(uh),[ixb-5,(ybas+yhaut)/2,zEq],gold);})();
     parent.add(g);}
   function build(){
@@ -541,6 +540,7 @@
       var pivot = new THREE.Object3D();
       pivot._isDoorPivot = true;
       pivot._doorDir = dir;
+      pivot._hingeX = hingeX;
       // trajectoire d'ouverture issue des points clés : pivote sur le chant + écartement interpolé
       var mv = doorMotion(openRad*180/Math.PI);
       pivot.position.set(hingeX + dir*mv.dx, 0, P/2 + 0.1 + mv.dz);
@@ -579,15 +579,16 @@
       makeDoor(L, -L/2, +1);   addCabHinge(+1,+hy0); addCabHinge(+1,-hy0);   // porte unique
     }
 
-    if(state.showDims && state.dimsReceived) addDimensions(cover, L, H, P);
-
-    // le switch "Cotes" n'apparaît que lorsque le client a saisi ses dimensions
-    var cbxTgl = root.querySelector(".cbx-bar-toggle");
-    if(cbxTgl) cbxTgl.style.display = state.dimsReceived ? "" : "none";
+    if(state.showDims) addDimensions(cover, L, H, P);
 
     model.add(cover);
 
-    // --- mise à l'échelle pour cadrage constant ---
+    // --- mise à l'échelle + recentrage avec porte ouverte ---
+    var doorW = (L > 60) ? L/2 : L;
+    cover._doorW = doorW;
+    cover._cover = true;
+    var openShift = Math.sin(openRad) * doorW * 0.35;
+    cover.position.x = openShift;
     var maxDim = Math.max(L, H, P);
     model.scale.setScalar(72 / maxDim);
   }
@@ -678,9 +679,15 @@
 
   function setDoorAngle(deg){
     var rad = deg * Math.PI / 180;
+    var mv = doorMotion(deg);
     model.traverse(function(o){
       if(o._isDoorPivot){
         o.rotation.y = -o._doorDir * rad;
+        o.position.x = o._hingeX + o._doorDir * mv.dx;
+        o.position.z = state.P/2 + 0.1 + mv.dz;
+      }
+      if(o._cover){
+        o.position.x = Math.sin(rad) * o._doorW * 0.35;
       }
     });
   }
@@ -693,40 +700,46 @@
       var elapsed = (timestamp - introStartTime) / 1000;
       var t = Math.min(elapsed / INTRO_DURATION, 1);
 
-      // Phase 1 (0→0.45) : zoom in, porte fermée, légère rotation
-      if(t < 0.45){
-        var tp = easeOutCubic(t / 0.45);
+      // Phase 1 (0→0.4) : zoom in caméra
+      if(t < 0.4){
+        var tp = easeOutCubic(t / 0.4);
         camera.position.z = lerp(CAM_START_Z, CAM_END_Z, tp);
         camera.position.y = lerp(CAM_START_Y, CAM_END_Y, tp);
-        model.rotation.y = lerp(0.5, 0.3, tp);
-        setDoorAngle(0); // porte fermée
+        model.rotation.y = lerp(-0.3, 0.4, tp);
       }
-      // Phase 2 (0.45→0.55) : pause face avant porte fermée
-      else if(t < 0.55){
+      // Phase 2 (0.4→0.65) : rotation 3/4 + porte qui s'ouvre
+      else if(t < 0.65){
+        var tp = easeInOutCubic((t - 0.4) / 0.25);
         camera.position.z = CAM_END_Z;
         camera.position.y = CAM_END_Y;
-        model.rotation.y = 0.3;
-        setDoorAngle(0);
-      }
-      // Phase 3 (0.55→0.80) : porte s'ouvre
-      else if(t < 0.80){
-        var tp = easeInOutCubic((t - 0.55) / 0.25);
-        model.rotation.y = lerp(0.3, 0.5, tp);
+        model.rotation.y = lerp(0.4, 0.6, tp);
         doorAnimAngle = lerp(0, state.open, tp);
         setDoorAngle(doorAnimAngle);
       }
-      // Phase 4 (0.80→1.0) : rotation lente pour admirer l'intérieur
+      // Phase 3 (0.65→0.85) : rotation lente pour admirer
+      else if(t < 0.85){
+        var tp = (t - 0.65) / 0.2;
+        model.rotation.y = lerp(0.6, -0.4, easeInOutCubic(tp));
+      }
+      // Phase 4 (0.85→1) : revenir position de départ, porte se referme
       else {
-        var tp = easeInOutCubic((t - 0.80) / 0.20);
-        model.rotation.y = lerp(0.5, -0.3, tp);
-        setDoorAngle(state.open);
+        var tp = easeInOutCubic((t - 0.85) / 0.15);
+        model.rotation.y = lerp(-0.4, 0, tp);
+        doorAnimAngle = lerp(state.open, 0, tp);
+        setDoorAngle(doorAnimAngle);
       }
 
       if(t >= 1){
         introDone = true;
-        setDoorAngle(state.open);
+        setDoorAngle(state.open); // position finale normale
+        model.rotation.y = 0;
         camera.position.z = CAM_END_Z;
         camera.position.y = CAM_END_Y;
+      }
+    } else {
+      // Rotation auto lente après intro
+      if(!dragging && auto){
+        model.rotation.y += 0.004;
       }
     }
 
@@ -765,7 +778,6 @@
       setActivePreset(key);
       if(PRESETS[key]){
         state.L=PRESETS[key].L; state.H=PRESETS[key].H; state.P=PRESETS[key].P;
-        state.dimsReceived = true;             // le client a choisi un format → on affiche les cotes
         root.querySelector("#cbx-L").value=state.L;
         root.querySelector("#cbx-H").value=state.H;
         root.querySelector("#cbx-P").value=state.P;
@@ -777,7 +789,6 @@
   function bindRange(id, prop){
     root.querySelector(id).addEventListener("input", function(e){
       state[prop] = parseFloat(e.target.value);
-      state.dimsReceived = true;               // le client a saisi sa propre dimension
       setActivePreset("custom");
       build(); syncReadout();
     });
@@ -838,7 +849,6 @@
   function cbNum(doc,id){ var el=doc&&doc.getElementById(id); if(!el) return NaN; var v=parseFloat(String(el.value).replace(',','.')); return isNaN(v)?NaN:v; }
   function cbChk(doc,id){ var e=doc&&doc.getElementById(id); return !!(e&&e.checked); }
   var cbLastKey='';
-  var cbBaselineDims='';   // dimensions présentes dans les champs du site AU CHARGEMENT (valeurs par défaut)
   function cbApply(src){
     var L,H,P,decH,decB,nwT,nhT,nw,nh,nxT,nxB;
     if(src){ // données reçues par postMessage
@@ -853,12 +863,7 @@
     if(!(L>0&&H>0&&P>0)) return;                 // on attend les 3 dimensions
     if(nxT==null) nxT=state.nxT; if(nxB==null) nxB=state.nx;   // gardent la valeur si non fournie
     var key=[L,H,P,decH,decB,nwT,nhT,nw,nh,nxT,nxB].join('|');
-    if(key===cbLastKey) return;
-    var cbFirstRead = (cbLastKey==='');
-    cbLastKey=key;
-    // La 1re lecture au chargement correspond aux valeurs par défaut du site : pas une saisie client.
-    // Toute modification ultérieure (ou des valeurs différentes du défaut) = saisie client → cotes visibles.
-    if(!(cbFirstRead && [L,H,P].join('|')===cbBaselineDims)) state.dimsReceived = true;
+    if(key===cbLastKey) return; cbLastKey=key;
     state.L=Math.round(L*10)/10; state.H=Math.round(H*10)/10; state.P=Math.round(P*10)/10;
     state.notchTop=!!decH; if(decH){ if(nwT>0)state.nwT=nwT; if(nhT>0)state.nhT=nhT; } state.nxT=nxT;
     state.notch   =!!decB; if(decB){ if(nw >0)state.nw =nw;  if(nh >0)state.nh =nh;  } state.nx=nxB;
@@ -872,11 +877,6 @@
   }
   (function cbBridgeInit(){
     var doc=cbSiteDoc();
-    // mémorise les valeurs par défaut des champs pour ne pas les confondre avec une saisie client
-    if(doc){
-      var bL=cbNum(doc,'propL'), bH=cbNum(doc,'propH'), bP=cbNum(doc,'propP');
-      if(bL>0&&bH>0&&bP>0) cbBaselineDims=[bL,bH,bP].join('|');
-    }
     if(doc){
       ['cbInputH','cbInputL','cbInputP','cbDecHautW','cbDecHautD','cbDecBasW','cbDecBasD'].forEach(function(id){
         var e=doc.getElementById(id); if(e) e.addEventListener('input', function(){ setTimeout(function(){cbApply();},0); });
@@ -893,8 +893,6 @@
   // ---- init ----
   setActivePreset("75");
   camera.position.set(0, 60, 420); // position de départ pour l'intro
-  resize(); build(); syncReadout();
-  setDoorAngle(0);
-  requestAnimationFrame(loop);
+  resize(); build(); syncReadout(); requestAnimationFrame(loop);
 })();
 </script>
