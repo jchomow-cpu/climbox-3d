@@ -78,8 +78,8 @@
           <button class="cbx-sw"           data-finish="blanc"      style="--c:#F2F1EC" title="Blanc"></button>
           <button class="cbx-sw" data-finish="bois"       style="--c:#9c6b3f" title="Bois"></button>
           <button class="cbx-sw"           data-finish="noir"       style="--c:#1B1B1B" title="Noir"></button>
-          <button class="cbx-sw is-active" data-finish="cachemire"  style="--c:#CEC2A8" title="Cachemire"></button>
-          <button class="cbx-sw"           data-finish="anthracite" style="--c:#3A3D40" title="Anthracite"></button>
+          <button class="cbx-sw is-active" data-finish="cachemire"  style="--c:#A89878" title="Cachemire"></button>
+          <button class="cbx-sw"           data-finish="anthracite" style="--c:#0A0B0C" title="Anthracite"></button>
         </div>
       </div>
 
@@ -280,8 +280,8 @@
     blanc:      { color:0xF2F1EC, rough:0.55, wood:false },
     bois:       { color:0xa4794d, rough:0.62, wood:true  },
     noir:       { color:0x1B1B1B, rough:0.45, wood:false },
-    cachemire:  { color:0xCEC2A8, rough:0.32, metal:0.03, wood:false },
-    anthracite: { color:0x3A3D40, rough:0.45, wood:false }
+    cachemire:  { color:0xA89878, rough:0.32, metal:0.03, wood:false },
+    anthracite: { color:0x0A0B0C, rough:0.45, wood:false }
   };
 
   // ---- scène ----
@@ -540,6 +540,7 @@
       var pivot = new THREE.Object3D();
       pivot._isDoorPivot = true;
       pivot._doorDir = dir;
+      pivot._hingeX = hingeX;
       // trajectoire d'ouverture issue des points clés : pivote sur le chant + écartement interpolé
       var mv = doorMotion(openRad*180/Math.PI);
       pivot.position.set(hingeX + dir*mv.dx, 0, P/2 + 0.1 + mv.dz);
@@ -582,7 +583,12 @@
 
     model.add(cover);
 
-    // --- mise à l'échelle pour cadrage constant ---
+    // --- mise à l'échelle + recentrage avec porte ouverte ---
+    var doorW = (L > 60) ? L/2 : L;
+    cover._doorW = doorW;
+    cover._cover = true;
+    var openShift = Math.sin(openRad) * doorW * 0.35;
+    cover.position.x = openShift;
     var maxDim = Math.max(L, H, P);
     model.scale.setScalar(72 / maxDim);
   }
@@ -673,9 +679,15 @@
 
   function setDoorAngle(deg){
     var rad = deg * Math.PI / 180;
+    var mv = doorMotion(deg);
     model.traverse(function(o){
       if(o._isDoorPivot){
         o.rotation.y = -o._doorDir * rad;
+        o.position.x = o._hingeX + o._doorDir * mv.dx;
+        o.position.z = state.P/2 + 0.1 + mv.dz;
+      }
+      if(o._cover){
+        o.position.x = Math.sin(rad) * o._doorW * 0.35;
       }
     });
   }
