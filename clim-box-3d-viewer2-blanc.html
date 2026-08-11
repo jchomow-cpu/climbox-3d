@@ -410,7 +410,7 @@
     // Hauteur utile (5cm plus bas que avant)
     (function(){var gold=0xc8a96e;
       var ixb=L/2-T-2.4+1, zEq=-P/2+0.4;
-      var ybas=-(H/2)+1.9, yhaut=(H/2)-9.4, uh=H-2.5;
+      var ybas=-(H/2)+1.9, yhaut=(H/2)-HINGEFIT.edgeInset, uh=H-2.5;
       dim([ixb,ybas,zEq],[ixb,yhaut,zEq],[ixb-1.6,ybas,zEq],[ixb+1.6,ybas,zEq],[ixb-1.6,yhaut,zEq],[ixb+1.6,yhaut,zEq],fmt(uh),[ixb-5,(ybas+yhaut)/2,zEq],gold);})();
     // Cotes de la découpe (encoche passe-câble)
     function notchDims(yc,on,nwv,nhv,nxv){
@@ -651,7 +651,7 @@
   // ---- animation cinématique + rotation auto ----
   var INTRO_DURATION = 5.5; // secondes
   var introStartTime = null;
-  var introDone = false;
+  var introDone = true; // intro cinématique désactivée
 
   // Positions caméra pour l'intro
   var CAM_START_Z = 420;   // loin au départ
@@ -885,10 +885,10 @@
 
   // ---- init ----
   setActivePreset("75");
-  camera.position.set(0, 60, 420); // position de départ pour l'intro
-  var _savedOpen = state.open; state.open = 0; // porte fermée pour l'intro
+  camera.position.set(0, 12, 190); // vue finale directe (intro désactivée)
   resize(); build(); syncReadout();
-  state.open = _savedOpen; // restaurer l'angle normal
+  model.rotation.y = 0.5;           // angle 3/4 par défaut
+  setDoorAngle(state.open);         // porte ouverte d'emblée
   requestAnimationFrame(loop);
 })();
 </script>
