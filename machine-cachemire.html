@@ -508,7 +508,7 @@
 
   // Écran étroit (mobile portrait) : le FOV horizontal se réduit avec l'aspect ratio,
   // donc on recule la caméra pour que la machine reste entièrement visible dans le cadre.
-  var BASE_ASPECT = 1.3, MAX_ZOOM_OUT = 2.4, userZoomed = false;
+  var BASE_ASPECT = 1.3, MAX_ZOOM_OUT = 1.8, userZoomed = false;
   function zoomFactor(){
     var a = camera.aspect || 1;
     return a < BASE_ASPECT ? Math.min(MAX_ZOOM_OUT, BASE_ASPECT / a) : 1;
