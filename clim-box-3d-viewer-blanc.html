@@ -307,14 +307,15 @@ html, body{ height:100%; margin:0; }
 #cbx-cfg .cbx-pan-right::after{border-top:4px solid transparent; border-bottom:4px solid transparent; border-left:5px solid currentColor}
 @media (max-width:760px){
   #cbx-cfg .cbx-view{min-height:400px}
-  /* HUD mobile : colonne compacte à gauche (slider vertical + Cotes), sans flèches */
+  /* HUD mobile : colonne compacte à gauche (slider vertical + Cotes), sans flèches, cadre ajusté au slider */
   #cbx-cfg .cbx-bar{
     left:10px; right:auto; bottom:10px; top:auto;
-    flex-direction:column; align-items:flex-start; gap:12px; padding:10px 12px; width:auto;
+    flex-direction:column; align-items:center; gap:10px; padding:9px 8px; width:auto;
   }
   #cbx-cfg .cbx-pan{display:none !important}
-  #cbx-cfg .cbx-bar-open{width:auto; display:flex; flex-direction:column; align-items:center; gap:7px}
-  #cbx-cfg .cbx-bar-open .cbx-bar-row{margin-bottom:0; gap:6px; font-size:11px; justify-content:center}
+  #cbx-cfg .cbx-bar-open{width:auto; display:flex; flex-direction:column; align-items:center; gap:4px}
+  #cbx-cfg .cbx-bar-open .cbx-bar-row{flex-direction:column; align-items:center; gap:0; margin-bottom:0; font-size:9.5px; line-height:1.12; text-align:center; white-space:normal; max-width:48px}
+  #cbx-cfg .cbx-bar-toggle{flex-direction:column; gap:3px; font-size:10px; text-align:center}
   #cbx-cfg .cbx-bar-open input#cbx-open{
     -webkit-appearance:slider-vertical; appearance:slider-vertical;
     writing-mode:vertical-lr; direction:rtl;
