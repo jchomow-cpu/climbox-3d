@@ -1167,6 +1167,7 @@ Si le téléchargement échoue, la visionneuse d'origine est chargée telle quel
 (function(){
 var fr=document.getElementById('cb-3d-frame'); if(!fr) return;
 var SRC=fr.getAttribute('data-src')||fr.getAttribute('src'); if(!SRC) return;
+SRC += (SRC.indexOf('?')>-1?'&':'?')+'v='+Math.floor(Date.now()/60000);  /* cache-bust 1 min : propagation rapide des MAJ GitHub Pages */
 var FIX='<style id="cbx-embed-fix">html,body{height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;background:transparent!important}'
 +'#cbx-cfg{height:100%!important;width:100%!important;max-width:none!important;display:flex!important;flex-direction:column!important;margin:0!important;padding:0!important}'
 +'#cbx-cfg .cbx-stage{flex:1 1 auto!important;min-height:0!important;height:100%!important;border:0!important;border-radius:0!important;margin:0!important}'
