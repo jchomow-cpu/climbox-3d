@@ -307,8 +307,19 @@ html, body{ height:100%; margin:0; }
 #cbx-cfg .cbx-pan-right::after{border-top:4px solid transparent; border-bottom:4px solid transparent; border-left:5px solid currentColor}
 @media (max-width:760px){
   #cbx-cfg .cbx-view{min-height:400px}
-  #cbx-cfg .cbx-bar{left:10px; right:auto; bottom:10px; gap:12px; padding:8px 11px}
-  #cbx-cfg .cbx-bar-open{width:120px}
+  /* HUD mobile : colonne compacte à gauche (slider vertical + Cotes), sans flèches */
+  #cbx-cfg .cbx-bar{
+    left:10px; right:auto; bottom:10px; top:auto;
+    flex-direction:column; align-items:flex-start; gap:12px; padding:10px 12px; width:auto;
+  }
+  #cbx-cfg .cbx-pan{display:none !important}
+  #cbx-cfg .cbx-bar-open{width:auto; display:flex; flex-direction:column; align-items:center; gap:7px}
+  #cbx-cfg .cbx-bar-open .cbx-bar-row{margin-bottom:0; gap:6px; font-size:11px; justify-content:center}
+  #cbx-cfg .cbx-bar-open input#cbx-open{
+    -webkit-appearance:slider-vertical; appearance:slider-vertical;
+    writing-mode:vertical-lr; direction:rtl;
+    width:14px; height:104px; padding:0; margin:0;
+  }
 }
 </style>
 

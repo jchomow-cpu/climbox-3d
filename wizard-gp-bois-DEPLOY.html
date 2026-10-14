@@ -103,8 +103,6 @@ window.CB_PRODUCT_URL = 'https://clim-box.fr/products/cache-tableau-electrique-b
             </div>
 
             <div class="cb-dec-sec">
-              <div class="cb-dec-sec__title">Encoches <span>gaines · câbles · goulotte</span></div>
-
               <div class="cb-dec-card" id="cardHaut">
                 <div class="cb-decoupe-toggle">
                   <label class="cb-checkbox-label">
@@ -160,7 +158,6 @@ window.CB_PRODUCT_URL = 'https://clim-box.fr/products/cache-tableau-electrique-b
                   <div class="cb-center-toggle"><label class="cb-checkbox-label cb-checkbox-sm"><input type="checkbox" id="cbCoteGCentre" data-cb-action="center-coteG"><span class="cb-checkbox-custom"></span><span>Centrer la découpe</span></label></div>
                   <div class="cb-center-toggle"><label class="cb-checkbox-label cb-checkbox-sm"><input type="checkbox" id="cbCoteGCoupeH" data-cb-action="coupeH-coteG"><span class="cb-checkbox-custom"></span><span>Couper complètement en haut</span></label></div>
                   <div class="cb-center-toggle"><label class="cb-checkbox-label cb-checkbox-sm"><input type="checkbox" id="cbCoteGCoupeB" data-cb-action="coupeB-coteG"><span class="cb-checkbox-custom"></span><span>Couper complètement en bas</span></label></div>
-                  <div class="cb-decoupe-note">Ouverte à l'arrière. Bridée à 3 cm des bords, sauf « couper complètement ».</div>
                 </div>
               </div>
 
@@ -181,7 +178,6 @@ window.CB_PRODUCT_URL = 'https://clim-box.fr/products/cache-tableau-electrique-b
                   <div class="cb-center-toggle"><label class="cb-checkbox-label cb-checkbox-sm"><input type="checkbox" id="cbCoteDCentre" data-cb-action="center-coteD"><span class="cb-checkbox-custom"></span><span>Centrer la découpe</span></label></div>
                   <div class="cb-center-toggle"><label class="cb-checkbox-label cb-checkbox-sm"><input type="checkbox" id="cbCoteDCoupeH" data-cb-action="coupeH-coteD"><span class="cb-checkbox-custom"></span><span>Couper complètement en haut</span></label></div>
                   <div class="cb-center-toggle"><label class="cb-checkbox-label cb-checkbox-sm"><input type="checkbox" id="cbCoteDCoupeB" data-cb-action="coupeB-coteD"><span class="cb-checkbox-custom"></span><span>Couper complètement en bas</span></label></div>
-                  <div class="cb-decoupe-note">Ouverte à l'arrière. Bridée à 3 cm des bords, sauf « couper complètement ».</div>
                 </div>
               </div>
             </div>
@@ -326,7 +322,7 @@ window.CB_PRODUCT_URL = 'https://clim-box.fr/products/cache-tableau-electrique-b
 }
 .cb-nav-prev{ flex:0 0 auto; margin-right:auto; height:auto; border:none; background:none; color:#999; font-weight:400; padding:6px 4px; text-decoration:underline; }
 .cb-nav-prev:hover{ color:#666; background:none; border:none; text-decoration:underline; }
-.cb-nav-next, .cb-nav-valid{ flex:1 1 auto; min-width:120px; height:52px; padding:0 14px; font-size:16px; font-weight:700; border:1px solid #242424 !important; border-radius:8px; background:#A3BA1A !important; color:#FAFBFC !important; box-shadow:1px 1px 3px 0 rgba(36,36,36,.5); white-space:nowrap; }
+.cb-nav-next, .cb-nav-valid{ flex:0 0 auto; min-width:0; height:52px; padding:0 40px; font-size:16px; font-weight:700; border:1px solid #242424 !important; border-radius:8px; background:#A3BA1A !important; color:#FAFBFC !important; box-shadow:1px 1px 3px 0 rgba(36,36,36,.5); white-space:nowrap; }
 .cb-nav-next:hover, .cb-nav-valid:hover{ background:#5E6B0B !important; box-shadow:1px 2px 5px 0 rgba(36,36,36,.55); }
 .cb-nav-btn:disabled{ cursor:not-allowed; }
 /* Suivant/Valider restent verts + texte blanc même désactivés */
@@ -340,11 +336,11 @@ window.CB_PRODUCT_URL = 'https://clim-box.fr/products/cache-tableau-electrique-b
 /* Fermeture */
 .cb-lock-opts{ display:flex; flex-direction:column; gap:10px; }
 .cb-lock-opt{
-  text-align:left; padding:22px 22px; border:1.5px solid #E5E7EB; border-radius:10px; background:#fff;
-  cursor:pointer; font-family:inherit; transition:.15s; display:flex; flex-direction:column; gap:5px;
+  text-align:left; padding:16px 18px; border:2px solid #E5E7EB; border-radius:12px; background:#fff;
+  cursor:pointer; font-family:inherit; transition:.15s; display:flex; flex-direction:column; gap:6px;
 }
-.cb-lock-opt:hover{ border-color:#6F7F0D; }
-.cb-lock-opt.is-active{ border-color:#6F7F0D; background:rgba(144,156,6,.06); box-shadow:0 0 0 1px #6F7F0D; }
+.cb-lock-opt:hover{ border-color:#A3BA1A; }
+.cb-lock-opt.is-active{ border-color:#6F7F0D; background:rgba(163,186,26,.08); box-shadow:none; }
 .cb-lock-name{ font-size:14px; font-weight:600; color:#171717; }
 .cb-lock-sub{ font-size:12px; color:#8a8a86; }
 
@@ -442,13 +438,13 @@ button[data-cb-locked]{ opacity:.5 !important; }
   .cb-steps-body{ padding:12px 18px; }
 
   /* Nav 3 colonnes égales : Retour à gauche | prix au centre exact | Suivant à droite */
-  .cb-steps-nav{ position:static; padding:6px 12px 2px; gap:8px; align-items:center; }
+  .cb-steps-nav{ position:relative; padding:6px 12px 2px; gap:8px; align-items:center; justify-content:space-between; }
   .cb-nav-prev{
     flex:0 0 32%; min-width:0; margin:0; height:auto; border:none; background:none; text-align:left;
     justify-content:flex-start; font-size:12px; font-weight:400; color:#999; padding:4px 4px; text-decoration:underline;
   }
   .cb-nav-prev:hover{ background:none; border:none; text-decoration:underline; }
-  .cb-nav-priceblk{ position:static; flex:1 1 auto; min-width:0; margin:0; align-items:center; text-align:center; }
+  .cb-nav-priceblk{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); flex:0 0 auto; min-width:0; margin:0; align-items:center; text-align:center; }
   .cb-nav-next, .cb-nav-valid{ flex:0 0 32%; min-width:0; margin:0; height:46px; padding:0 12px; font-size:16px; background:#A3BA1A !important; color:#FAFBFC !important; }
   .cb-nav-price-lbl{ font-size:10px; }
   .cb-mob-price{ display:block; font-size:18px; font-weight:700; color:#171717; }
