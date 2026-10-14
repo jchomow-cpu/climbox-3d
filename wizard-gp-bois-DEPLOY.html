@@ -623,9 +623,17 @@ function cbInitWizard() {
     var pH=document.getElementById('propDecHaut'), pB=document.getElementById('propDecBas');
     if(pH){ var s=decoupeState.haut; pH.value=(s.active&&s.w>0&&s.d>0&&s.x>0)? s.w+'×'+s.d+' cm, à '+s.x+' cm du bord gauche'+(s.centered?' (centré)':'') : ''; }
     if(pB){ var sb=decoupeState.bas; pB.value=(sb.active&&sb.w>0&&sb.d>0&&sb.x>0)? sb.w+'×'+sb.d+' cm, à '+sb.x+' cm du bord gauche'+(sb.centered?' (centré)':'') : ''; }
-    var pG=document.getElementById('propDecCoteG'), pD=document.getElementById('propDecCoteD');
+    /* Côtés : les champs DOIVENT être dans le formulaire panier du contenu (#cbxCartForm), sinon non envoyés au panier */
+    var _cf=document.getElementById('cbxCartForm');
+    function _ensureCf(name){ if(!_cf) return null; var e=_cf.querySelector('input[name="'+name+'"]'); if(!e){ e=document.createElement('input'); e.type='hidden'; e.name=name; _cf.appendChild(e); } return e; }
+    var pG=_ensureCf('properties[Découpe côté gauche]'), pD=_ensureCf('properties[Découpe côté droit]');
     if(pG) pG.value=coteDesc(decoupeState.coteG);
     if(pD) pD.value=coteDesc(decoupeState.coteD);
+  }
+  function coteShort(s){
+    if(!(s.active&&s.p>0)) return '';
+    var h=(s.cutT&&s.cutB)?'toute hauteur':('H'+(s.h||'?')+' cm'+(s.cutT?' (coupée haut)':'')+(s.cutB?' (coupée bas)':''));
+    return h+' × P'+s.p+' cm';
   }
   function coteDesc(s){
     if(!(s.active&&s.p>0)) return '';
@@ -973,6 +981,8 @@ function cbInitWizard() {
     var dec=getDecoupeCount(), decTxt=[];
     if(decoupeState.haut.active&&decoupeState.haut.w>0) decTxt.push('haute '+decoupeState.haut.w+'×'+decoupeState.haut.d+' cm');
     if(decoupeState.bas.active&&decoupeState.bas.w>0) decTxt.push('basse '+decoupeState.bas.w+'×'+decoupeState.bas.d+' cm');
+    if(decoupeState.coteG.active&&decoupeState.coteG.p>0) decTxt.push('côté gauche '+coteShort(decoupeState.coteG));
+    if(decoupeState.coteD.active&&decoupeState.coteD.p>0) decTxt.push('côté droit '+coteShort(decoupeState.coteD));
     var html='';
     html+='<div class="cb-rr"><span>Dimensions intérieures</span><b>'+d.h+' × '+d.l+' × '+d.p+' cm</b></div>';
     html+='<div class="cb-rr"><span>Dimensions extérieures</span><b>'+extH+' × '+extL+' × '+extP+' cm</b></div>';
