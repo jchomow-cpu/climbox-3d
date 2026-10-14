@@ -907,8 +907,6 @@ function cbInitWizard() {
     document.getElementById('cbModal').style.display='none';
     document.body.style.overflow='';
   };
-  /* Alias attendu par le bloc contenu (.cbx) : CTA sticky/final appellent window.cbxPrimary() */
-  window.cbxPrimary=function(){ window.cbOpenWizard(); };
   function cbGotoStep(n){
     cbStep=n;
     document.querySelectorAll('.cb-step').forEach(function(s){ s.classList.toggle('is-active', +s.getAttribute('data-step')===n); });
@@ -1069,10 +1067,10 @@ function cbInitWizard() {
 
   /* ── Câblage robuste par délégation (GemPages neutralise les handlers inline) ── */
   document.addEventListener('click', function(e){
-    var t = e.target.closest ? e.target.closest('[data-cb-action], #cbOpenWizard, .cb-summary-edit, #cbxCta, .cbx-sticky .cbx-cta, .cbx-final .cbx-cta') : null;
+    var t = e.target.closest ? e.target.closest('[data-cb-action], #cbOpenWizard, .cb-summary-edit') : null;
     if(!t) return;
     var a = t.getAttribute('data-cb-action');
-    if(t.id==='cbOpenWizard' || t.id==='cbxCta' || (t.classList && t.classList.contains('cb-summary-edit')) || (t.classList && t.classList.contains('cbx-cta') && t.closest('.cbx-sticky, .cbx-final'))) a='open';
+    if(t.id==='cbOpenWizard' || (t.classList && t.classList.contains('cb-summary-edit'))) a='open';
     var BTN={open:1,close:1,prev:1,next:1,validate:1,'lock-no':1,'lock-yes':1,'sens-G':1,'sens-D':1};
     if(!BTN[a]) return;
     e.preventDefault();
