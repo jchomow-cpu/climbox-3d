@@ -1,0 +1,601 @@
+<div>
+    <script>
+(function(){
+/* Démarre quand le contenu (div.cbx) existe, quel que soit l'ordre des sections dans GemPages. */
+var cbxStarted = false;
+function cbxStart(){ if (cbxStarted || !document.querySelector('.cbx')) return cbxStarted; cbxStarted = true; cbxRun(); return true; }
+function cbxWait(){ var n = 0, t = setInterval(function(){ if (cbxStart() || ++n > 150) clearInterval(t); }, 100); }
+if (!cbxStart()) { if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function(){ if (!cbxStart()) cbxWait(); }); else cbxWait(); }
+function cbxRun(){
+var root = document.querySelector('.cbx');
+var eur = function(n){ return n.toFixed(2).replace('.',',') + ' €'; };
+/* --- Session de fabrication (logique du bloc « Session de fabrication v5 » de Clim-Box, 30/09/2026) ---
+Clôture : mercredi 21h (Paris) · fabrication : clôture + 1 j · emballage : fab + 4 j · expédition : fab + 6 j · livraison : fab + 8 → + 9 j.
+Plus de 48 h avant la clôture : « Commandez avant … » ; moins de 48 h : compte à rebours en heures et minutes.
+config.json (GitHub) : finCommandes, fabrication, showCapacity, placesTotal, placesTaken, message (dates au format AAAA-MM-JJ ou AAAA-MM-JJ HH:MM, heure de Paris). --- */
+var LOT = {
+remoteConfigUrl: 'https://raw.githubusercontent.com/jchomow-cpu/climbox-3d/main/config.json',
+closeDay: 3, closeHour: 21, fabOffset: 1,
+offsets: { pack: 4, ship: 6, delivStart: 8, delivEnd: 9 },
+countdownHours: 48,
+finCommandes: '', fabrication: '', showCapacity: false, placesTotal: 0, placesTaken: 0, message: ''
+};
+var DAY = 86400000, TZ = 'Europe/Paris';
+var pad = function(n){ return String(n).padStart(2,'0'); };
+var frDate = function(ms, o){ o = o || {weekday:'short', day:'numeric', month:'long'}; o.timeZone = TZ; return new Date(ms).toLocaleDateString('fr-FR', o); };
+function parisOffsetMs(t){ var d = new Date(t); return new Date(d.toLocaleString('en-US', {timeZone:TZ})) - new Date(d.toLocaleString('en-US', {timeZone:'UTC'})); }
+function parisTime(y, mo, d, h, mi){ var base = Date.UTC(y, mo - 1, d, h, mi || 0); return base - parisOffsetMs(base); }
+function nextWeeklyDeadline(){
+var now = Date.now(), ymd = new Date(now).toLocaleDateString('en-CA', {timeZone:TZ}).split('-').map(Number);
+for (var i = 0; i < 8; i++) {
+var base = Date.UTC(ymd[0], ymd[1] - 1, ymd[2] + i, LOT.closeHour, 0);
+if (new Date(base).getUTCDay() !== LOT.closeDay) continue;
+var t = base - parisOffsetMs(base);
+if (t > now) return t;
+}
+return now + 7*DAY;
+}
+function parseConfigDate(str, defHour){
+if (!str || typeof str !== 'string') return NaN;
+var m = str.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{1,2}):(\d{2}))?$/); if (!m) return NaN;
+return parisTime(+m[1], +m[2], +m[3], m[4] !== undefined ? +m[4] : defHour, m[5] !== undefined ? +m[5] : 0);
+}
+function lotRange(a, b, sep){
+var same = frDate(a, {month:'long', year:'numeric'}) === frDate(b, {month:'long', year:'numeric'});
+return (same ? frDate(a, {day:'numeric'}) : frDate(a, {day:'numeric', month:'long'})) + sep + frDate(b, {day:'numeric', month:'long'});
+}
+var lot = root.querySelector('.cbx-lot');
+function lotRender(){
+var now = Date.now();
+var deadline = parseConfigDate(LOT.finCommandes, LOT.closeHour);
+if (!(deadline > now)) deadline = nextWeeklyDeadline();
+var fab = parseConfigDate(LOT.fabrication, 12);
+if (!(fab > deadline)) fab = deadline + LOT.fabOffset*DAY;
+var pack = fab + LOT.offsets.pack*DAY, ship = fab + LOT.offsets.ship*DAY, d0 = fab + LOT.offsets.delivStart*DAY, d1 = fab + LOT.offsets.delivEnd*DAY;
+var hour = new Date(deadline).toLocaleTimeString('fr-FR', {hour:'numeric', minute:'2-digit', timeZone:TZ}).replace(':','h').replace('h00','h');
+var txt = {
+close: frDate(deadline) + ' à ' + hour,
+closeDot: frDate(deadline) + ' · ' + hour,
+closeLong: frDate(deadline, {weekday:'long', day:'numeric', month:'long'}) + ' à ' + hour,
+closeShort: frDate(deadline, {day:'numeric', month:'long'}) + ' à ' + hour,
+closeDay: frDate(deadline, {weekday:'long'}) + ' à ' + hour,
+fab: frDate(fab), pack: frDate(pack), ship: frDate(ship),
+deliver: lotRange(d0, d1, '–'), deliverHead: lotRange(d0, d1, ' – '), deliverArrow: lotRange(d0, d1, ' → ')
+};
+root.querySelectorAll('[data-lot]').forEach(function(el){ var v = txt[el.getAttribute('data-lot')]; if (v !== undefined && el.textContent !== v) el.textContent = v; });
+var msg = document.getElementById('cbxLotMsg'), cap = document.getElementById('cbxLotCap');
+if (msg) {
+var left = deadline - now, html;
+if (left >= LOT.countdownHours * 3600000) {
+html = LOT.message ? String(LOT.message) : 'Commandez avant <b>' + txt.closeDot + '</b> pour être dans la prochaine fabrication.';
+} else {
+var mins = Math.max(0, Math.floor(left / 60000)), hh = Math.floor(mins / 60), mm = mins % 60;
+html = 'Clôture des commandes dans <span class="cbx-lot__count">' + (hh > 0 ? hh + 'h ' + pad(mm) + 'min' : mm + 'min') + '</span> — dernières heures pour être dans la prochaine fabrication.';
+}
+if (msg.innerHTML !== html) msg.innerHTML = html;
+}
+if (cap) {
+var total = +LOT.placesTotal || 0, taken = +LOT.placesTaken || 0;
+if (LOT.showCapacity && total > 0 && taken > 0) {
+var rest = Math.max(0, total - taken);
+cap.innerHTML = rest > 0
+? '<b>' + rest + (rest > 1 ? ' places restantes' : ' place restante') + '</b> sur ' + total + ' pour la fabrication du ' + txt.fab
+: 'Fabrication du ' + txt.fab + ' complète — prochaine fabrication le ' + frDate(fab + 7*DAY);
+cap.hidden = false;
+} else { cap.hidden = true; }
+}
+}
+lotRender(); setInterval(lotRender, 30000);
+/* config.json sur GitHub (dates exceptionnelles, message, places) ; en cas d'échec, calcul automatique */
+if (LOT.remoteConfigUrl && window.fetch) {
+fetch(LOT.remoteConfigUrl + '?v=' + Math.floor(Date.now() / 600000), { credentials: 'omit' })
+.then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+.then(function(c){ if (!c) return; ['finCommandes','fabrication','showCapacity','placesTotal','placesTaken','message'].forEach(function(k){ if (c[k] !== undefined) LOT[k] = c[k]; }); lotRender(); })
+.catch(function(){});
+}
+/* « Voir le détail » */
+(function(){
+var btn = document.getElementById('cbxLotToggle'), drawer = document.getElementById('cbxLotDrawer'), lbl = document.getElementById('cbxLotMore');
+if (!btn || !drawer || !lot) return;
+btn.addEventListener('click', function(){
+var open = drawer.hidden; drawer.hidden = !open; lot.classList.toggle('is-open', open);
+btn.setAttribute('aria-expanded', open ? 'true' : 'false'); if (lbl) lbl.textContent = open ? 'Masquer' : 'Voir le détail';
+});
+})();
+/* Formats standard : expédiés le jour même si commande avant 13h (heure de Paris, lundi–vendredi), sinon le jour ouvré suivant ; livraison 3 jours plus tard (jamais un dimanche). */
+function stdDates(){
+var now = Date.now();
+var ymd = new Date(now).toLocaleDateString('en-CA', {timeZone:TZ}).split('-').map(Number);
+var hour = parseInt(new Date(now).toLocaleTimeString('en-GB', {timeZone:TZ, hour:'2-digit', hour12:false}), 10);
+var day = function(off){ return Date.UTC(ymd[0], ymd[1] - 1, ymd[2] + off, 12); };
+var wd = function(t){ return new Date(t).getUTCDay(); };
+var off = (hour < 13 && wd(day(0)) >= 1 && wd(day(0)) <= 5) ? 0 : 1;
+while (wd(day(off)) === 0 || wd(day(off)) === 6) off++;
+var ship = day(off), deliver = ship + 3*DAY;
+if (wd(deliver) === 0) deliver += DAY;
+var lbl = off === 0 ? 'expédié aujourd\'hui si commande avant 13h' : (off === 1 ? 'expédié demain' : 'expédié ' + frDate(ship, {weekday:'long'}));
+root.querySelectorAll('[data-std="ship"]').forEach(function(el){ el.textContent = lbl; });
+root.querySelectorAll('[data-std="deliver"]').forEach(function(el){ el.textContent = frDate(deliver); });
+}
+stdDates(); setInterval(stdDates, 60000);
+/* --- onglets --- */
+root.querySelectorAll('#cbxTabs button').forEach(function(b){
+b.addEventListener('click', function(){
+root.querySelectorAll('#cbxTabs button').forEach(function(x){ x.setAttribute('aria-selected','false'); });
+b.setAttribute('aria-selected','true');
+root.querySelectorAll('.cbx-panel').forEach(function(p){
+p.setAttribute('data-open', p.getAttribute('data-panel') === b.getAttribute('data-tab') ? 'true' : 'false');
+});
+});
+});
+/* --- galerie : glisser au doigt, flèches, vignettes (une ligne) --- */
+(function(){
+var track=document.getElementById('cbxTrack'); if(!track) return;
+var slides=[].slice.call(track.children), n=slides.length, cur=0, target=null, raf=0, unlock=0;
+var thumbs=[].slice.call(root.querySelectorAll('#cbxThumbs button')), strip=document.getElementById('cbxThumbs');
+function warm(i){ [i-1,i,i+1,i+2].forEach(function(k){ var im=slides[(k+n)%n].querySelector('img'); if(im && im.loading==='lazy') im.loading='eager'; }); }
+function mark(i){
+cur=i;
+thumbs.forEach(function(t,k){ t.setAttribute('aria-selected', k===i ? 'true' : 'false'); });
+var t=thumbs[i];
+/* sans animation : Safari abandonne un défilement animé quand un autre démarre en même temps */
+if(t && strip.scrollWidth>strip.clientWidth+1){ var tr=t.getBoundingClientRect(), sr=strip.getBoundingClientRect(); if(tr.left<sr.left || tr.right>sr.right){ strip.style.scrollBehavior='auto'; strip.scrollLeft += (tr.left+tr.width/2)-(sr.left+sr.width/2); strip.style.scrollBehavior=''; } }
+warm(i);
+}
+function go(i){
+i=(i+n)%n; target=i; clearTimeout(unlock);
+unlock=setTimeout(function(){ target=null; if(Math.round(track.scrollLeft/Math.max(1,track.clientWidth))!==cur) track.scrollLeft=cur*track.clientWidth; },900);
+track.scrollTo({ left:i*track.clientWidth, behavior:'smooth' }); mark(i);
+}
+track.addEventListener('scroll', function(){
+cancelAnimationFrame(raf);
+raf=requestAnimationFrame(function(){
+var i=Math.round(track.scrollLeft/Math.max(1,track.clientWidth));
+if(target!==null){ if(i===target) target=null; return; }
+if(i!==cur && i>=0 && i<n) mark(i);
+});
+}, {passive:true});
+thumbs.forEach(function(t,k){ t.addEventListener('click', function(){ go(k); }); });
+document.getElementById('cbxGalPrev').addEventListener('click', function(){ go(cur-1); });
+document.getElementById('cbxGalNext').addEventListener('click', function(){ go(cur+1); });
+var tp=document.getElementById('cbxThumbPrev'), tn=document.getElementById('cbxThumbNext');
+function tstate(){ tp.disabled = strip.scrollLeft<=1; tn.disabled = strip.scrollLeft+strip.clientWidth>=strip.scrollWidth-1; }
+tp.addEventListener('click', function(){ strip.scrollBy({ left:-strip.clientWidth, behavior:'smooth' }); });
+tn.addEventListener('click', function(){ strip.scrollBy({ left:strip.clientWidth, behavior:'smooth' }); });
+strip.addEventListener('scroll', tstate, {passive:true}); window.addEventListener('resize', tstate); tstate();
+track.addEventListener('keydown', function(e){ if(e.key==='ArrowLeft'){ e.preventDefault(); go(cur-1); } else if(e.key==='ArrowRight'){ e.preventDefault(); go(cur+1); } });
+window.addEventListener('resize', function(){ track.scrollLeft=cur*track.clientWidth; });
+if(document.readyState==='complete') warm(0); else window.addEventListener('load', function(){ warm(0); });
+})();
+/* --- guide de mesure : cloné dans l'étape 1 du configurateur (la modale arrive plus loin dans le DOM) --- */
+(function(){
+function mount(){ var g = root.querySelector('.cbx-guidebox .cbx-guide'), slot = document.getElementById('cbGuideSlot');
+if (g && slot && !slot.firstChild) { var c = g.cloneNode(true); c.classList.add('cbx-guide--compact'); slot.appendChild(c); } }
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+})();
+/* --- lightbox <dialog> : mur de photos (1 photo) et photos des avis (galerie précédent / suivant), repli vers #avis --- */
+(function(){
+var dlg = document.getElementById('cbxLightbox'); if (!dlg) return;
+var canModal = typeof dlg.showModal === 'function';
+var img = document.getElementById('cbxLbImg'), prev = document.getElementById('cbxLbPrev'), next = document.getElementById('cbxLbNext'), cnt = document.getElementById('cbxLbCount');
+var photos = [], idx = 0;
+function draw(){ img.src = photos[idx]; cnt.textContent = (idx + 1) + ' / ' + photos.length; var one = photos.length < 2; prev.hidden = one; next.hidden = one; cnt.hidden = one; }
+function open(list, start, stars, text, name, date){
+if (!canModal) { location.hash = '#avis'; return; }
+photos = list; idx = start > 0 ? start : 0;
+document.getElementById('cbxLbStars').textContent = '★★★★★☆☆☆☆☆'.substr(5 - stars, 5);
+document.getElementById('cbxLbText').textContent = text ? '« ' + text + ' »' : '';
+document.getElementById('cbxLbName').textContent = name;
+document.getElementById('cbxLbDate').textContent = date;
+draw(); dlg.showModal();
+}
+root.querySelectorAll('.cbx-wall__item').forEach(function(b){
+b.addEventListener('click', function(){ open([b.querySelector('img').src], 0, parseInt(b.dataset.stars, 10) || 5, b.dataset.text, b.dataset.name, b.dataset.date); });
+});
+var grid = document.getElementById('cbxRevGrid');
+function fromReview(im){
+var art = im.closest('.cbx-rev'), list = [].map.call(art.querySelectorAll('.cbx-rev__photos img'), function(i){ return i.getAttribute('src'); });
+var stars = (art.querySelector('.cbx-stars').textContent.match(/★/g) || []).length;
+open(list, list.indexOf(im.getAttribute('src')), stars, art.querySelector('.cbx-rev__txt').textContent, art.querySelector('.cbx-rev__who').firstChild.textContent.trim(), art.querySelector('.cbx-rev__date').textContent);
+}
+if (grid) {
+grid.addEventListener('click', function(e){ var im = e.target.closest('.cbx-rev__photos img'); if (im) fromReview(im); });
+grid.addEventListener('keydown', function(e){ var im = e.target.closest('.cbx-rev__photos img'); if (im && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); fromReview(im); } });
+}
+prev.addEventListener('click', function(){ idx = (idx - 1 + photos.length) % photos.length; draw(); });
+next.addEventListener('click', function(){ idx = (idx + 1) % photos.length; draw(); });
+dlg.addEventListener('keydown', function(e){ if (photos.length > 1 && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); (e.key === 'ArrowLeft' ? prev : next).click(); } });
+dlg.querySelector('.cbx-lightbox__close').addEventListener('click', function(){ dlg.close(); });
+document.getElementById('cbxLbLink').addEventListener('click', function(){ dlg.close(); });
+dlg.addEventListener('click', function(e){ if (e.target === dlg) dlg.close(); });
+})();
+/* --- sélecteur de format : la carte active pilote les 3 CTA (hero, final, sticky) --- */
+function currentOpt(){ return root.querySelector('.cbx-opt[aria-checked="true"]'); }
+var cartForm = document.getElementById('cbxCartForm'), cartBtn = document.getElementById('cbxCartBtn');
+window.cbxConfigured = false;                     /* passe à true quand le configurateur affiche #cbSummary */
+/* Total du cache configuré, recalculé ici (hors fiche produit, le configurateur ne réécrit pas le bouton).
+Mêmes règles que le configurateur : 1 €/cm au-delà de 130 cm cumulés, 5 € par découpe, 10 € la serrure. */
+function cbxConfigTotal(){
+var smOpt = root.querySelector('.cbx-opt[data-name="Sur mesure"]');
+var base = smOpt ? parseFloat(smOpt.dataset.price) || 0 : 0;
+var v = function(id){ var e = document.getElementById(id); return e ? (parseFloat(String(e.value).replace(',', '.')) || 0) : 0; };
+var sum = v('propH') + v('propL') + v('propP'), supp = sum > 130 ? Math.ceil(sum - 130) : 0;
+var dec = 0; ['propDecHaut', 'propDecBas'].forEach(function(id){ var e = document.getElementById(id); if (e && e.value) dec++; });
+var lockEl = document.getElementById('cbLockYes'), lock = lockEl && lockEl.classList.contains('is-active') ? 10 : 0;
+return base + supp + dec * 5 + lock;
+}
+function syncCtas(){
+var o = currentOpt(); if (!o) return;
+var p = parseFloat(o.dataset.price), sm = o.dataset.name === 'Sur mesure';
+var conf = sm && window.cbxConfigured;         /* cache configuré : le bouton panier remplace le bouton Configurer */
+if (cartForm) cartForm.hidden = !conf;
+/* sur mesure : lot hebdo + note « 2 minutes · aperçu 3D … » ; standard : expédition sous 24 h */
+var shipSm = document.getElementById('cbxShipSm'), shipStd = document.getElementById('cbxShipStd'), note = document.getElementById('cbxCtaNote');
+if (shipSm) shipSm.hidden = !sm; if (shipStd) shipStd.hidden = sm; if (note) note.hidden = !sm || conf;   /* la note disparaît une fois le cache configuré */
+document.getElementById('cbxCta').hidden = conf;
+var price = conf ? eur(cbxConfigTotal()) : eur(p);
+if (conf && cartBtn) { var cartLbl = 'Ajouter au panier · ' + price; if (cartBtn.textContent !== cartLbl) cartBtn.textContent = cartLbl; }
+var lbl = sm ? 'Configurer mon cache' : 'Commander le ' + o.dataset.name;
+var set = function(id, v){ var el = document.getElementById(id); if (el) el.textContent = v; };
+set('cbxCtaLbl', lbl); set('cbxNew', eur(p));
+set('cbxStickyLbl', conf ? 'Ajouter au panier' : (sm ? 'Configurer' : 'Commander le ' + o.dataset.name)); set('cbxStickyPrice', price);
+set('cbxFinalLbl', conf ? 'Ajouter au panier' : lbl); set('cbxQuickPrice', price); set('cbxPromisePrice', price);
+}
+/* action principale des CTA secondaires (final, sticky) : panier si configuré, sinon configurateur / fiche standard */
+window.cbxPrimary = function(){ if (cartForm && !cartForm.hidden && cartBtn) cartBtn.click(); else cbxOuvrir(); };
+function select(opt){
+root.querySelectorAll('.cbx-opt').forEach(function(o){ o.setAttribute('aria-checked','false'); });
+opt.setAttribute('aria-checked','true');
+syncCtas();
+}
+/* page dédiée au sur mesure : un format standard ouvre directement sa variante sur la fiche standard */
+function choose(o){ var url = (typeof URL_STANDARD === 'object' && URL_STANDARD) ? URL_STANDARD[o.dataset.name] : null; if (url) { window.location.href = url; return; } select(o); }
+root.querySelectorAll('.cbx-opt').forEach(function(o){
+o.addEventListener('click', function(){ choose(o); });
+o.addEventListener('keydown', function(e){ if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); choose(o); } });
+});
+syncCtas();
+/* --- CTA : sur-mesure -> configurateur ; format standard -> sa variante sur la fiche produit bois --- */
+/* Variantes « Sans serrure » du produit /products/cache-tableau-electrique (relevées le 25/09/2026). */
+var URL_STANDARD = {
+'55 cm': 'https://clim-box.fr/products/cache-tableau-electrique?variant=42319918956730',
+'75 cm': 'https://clim-box.fr/products/cache-tableau-electrique?variant=53333008187725',
+'95 cm': 'https://clim-box.fr/products/cache-tableau-electrique?variant=42319919022266'
+};
+function cbxOuvrir(){
+var actif = root.querySelector('.cbx-opt[aria-checked="true"]');
+var nom   = actif ? actif.dataset.name : 'Sur mesure';
+if (nom === 'Sur mesure') {
+if (typeof window.cbOpenWizard === 'function') { window.cbOpenWizard(); return; }
+var relais = document.getElementById('cbOpenWizard');      /* secours : bouton natif du wizard */
+if (relais) { relais.click(); return; }
+console.warn('[CBX] configurateur introuvable');
+return;
+}
+var url = URL_STANDARD[nom];
+if (url) { window.location.href = url; }
+else { console.warn('[CBX] URL produit manquante pour le format ' + nom); }
+}
+document.getElementById('cbxCta').addEventListener('click', cbxOuvrir);
+/* --- Panier : on suit #cbSummary (affiché par cbValidate) et le libellé du bouton (réécrit par le configurateur) --- */
+(function(){
+var summary = document.getElementById('cbSummary');
+if (!cartForm || !summary || !('MutationObserver' in window)) return;
+new MutationObserver(function(){
+var on = summary.style.display !== 'none', changed = on !== window.cbxConfigured;
+window.cbxConfigured = on; syncCtas();   /* aussi après « Modifier » + nouvelle validation : le total est recalculé */
+if (changed && on) setTimeout(function(){ summary.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 80);
+}).observe(summary, { attributes: true, attributeFilter: ['style'] });
+new MutationObserver(function(){ if (window.cbxConfigured) syncCtas(); })
+.observe(cartBtn, { childList: true, characterData: true, subtree: true });
+/* Tiroir panier du thème (Dawn : <cart-drawer>) rechargé puis ouvert ; sans tiroir, ou en cas d'échec, page panier. */
+function openCartDrawer(){
+var d = document.querySelector('cart-drawer');
+if (!d || typeof d.renderContents !== 'function' || typeof d.getSectionsToRender !== 'function') { window.location.href = '/cart'; return; }
+var ids = d.getSectionsToRender().map(function(x){ return x.id; }).join(',');
+/* sans en-tête Accept JSON : sinon Shopify renvoie le panier (cart.js) au lieu des sections */
+return fetch(((window.routes && window.routes.cart_url) || '/cart') + '?sections=' + ids)
+.then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+.then(function(sections){
+var pop = document.getElementById('cbxPop'); if (pop) { pop.classList.remove('is-on'); pop.hidden = true; }   /* notification de vente masquée */
+d.classList.remove('is-empty'); d.renderContents({ id: null, sections: sections }); cartBtn.disabled = false;
+})
+.catch(function(){ window.location.href = '/cart'; });
+}
+/* Envoi via fetch pour que l'intercepteur du configurateur ajoute les suppléments, puis tiroir panier. */
+cartForm.addEventListener('submit', function(e){
+e.preventDefault();
+var err = document.getElementById('cbxCartErr'); if (err) err.hidden = true;
+/* Le configurateur prépare les suppléments (grand format, découpes, serrure) au « mousedown » sur le bouton panier :
+on le déclenche aussi pour la barre collante, le bouton du bas de page et la touche Entrée, sinon ils partaient sans. */
+try { cartBtn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true })); } catch (x) {}
+cartBtn.disabled = true;
+fetch('/cart/add.js', { method: 'POST', body: new FormData(cartForm), headers: { 'Accept': 'application/json' } })
+.then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return openCartDrawer(); })
+.catch(function(){ cartBtn.disabled = false; if (err) err.hidden = false; });
+});
+})();
+/* --- barre sticky : apparaît quand le bouton « Configurer mon cache » est passé au-dessus de l'écran
+en descendant ; disparaît quand on remonte jusqu'à lui ou quand le CTA final est visible --- */
+(function () {
+var bar = document.querySelector('.cbx-sticky'), cta = document.getElementById('cbxCta');
+var fin = document.querySelector('.cbx-final .cbx-cta');
+if (!bar || !cta) return;
+var raf = null;
+function update() {
+raf = null;
+var ref = (cartForm && !cartForm.hidden && cartBtn) ? cartBtn : cta;
+var r = ref.getBoundingClientRect(), passed = r.bottom < 0;
+var finVisible = false;
+if (fin) { var f = fin.getBoundingClientRect(); finVisible = f.top < window.innerHeight && f.bottom > 0; }
+bar.classList.toggle('is-on', passed && !finVisible);
+}
+function onScroll() { if (raf === null) raf = requestAnimationFrame(update); }
+window.addEventListener('scroll', onScroll, { passive: true });
+window.addEventListener('resize', onScroll);
+update();
+})();
+/* --- sélecteur de finition : chaque teinte pointe vers sa page produit --- */
+(function () {
+var CFG_FINS = [
+{ id:'blanc', name:'Blanc', desc:'Blanc · finition mat satiné',
+url:'https://clim-box.fr/products/cache-tableau-electrique-blanc-sur-mesure',
+style:'background:#f0efec;box-shadow:inset 0 0 0 1px #e0deda;' },
+{ id:'bois', name:'Bois', desc:'Bois · finition pore bois naturel',
+url:'https://clim-box.fr/products/cache-tableau-electrique-bois-sur-mesure',
+style:"background-image:url('https://cdn.shopify.com/s/files/1/0567/3867/6922/files/K003_1.webp?v=1778163080');background-size:cover;background-position:center;" },
+{ id:'noir', name:'Noir', desc:'Noir · finition mat sablé',
+url:'https://clim-box.fr/products/cache-tableau-electrique-noir-sur-mesure',
+style:'background:#2d2d2d;' },
+{ id:'cachemire', name:'Cachemire', desc:'Cachemire · finition mat sablé',
+url:'https://clim-box.fr/products/cache-tableau-electrique-cachemire-sur-mesure',
+style:'background:#c9bfb2;box-shadow:inset 0 0 0 1px #bdb3a6;' },
+{ id:'anthracite', name:'Anthracite', desc:'Anthracite · finition mat sablé',
+url:'https://clim-box.fr/products/cache-tableau-electrique-anthracite-sur-mesure',
+style:"background-image:url('https://cdn.shopify.com/s/files/1/0567/3867/6922/files/0164_PE_v2.jpg?v=1778220363');background-size:cover;background-position:center;" }
+];
+function buildFinRow(activeId) {
+var row = document.getElementById('cfg-fin-row');
+var desc = document.getElementById('cfg-fin-desc');
+if (!row || !desc) return;
+row.innerHTML = '';
+var activeDesc = '';
+CFG_FINS.forEach(function (f) {
+var b = document.createElement('button');
+b.type = 'button';
+b.className = 'cfg-fin' + (f.id === activeId ? ' selected' : '');
+b.setAttribute('aria-label', 'Finition ' + f.name);
+b.setAttribute('aria-current', f.id === activeId ? 'true' : 'false');
+b.innerHTML = '<span class="cfg-fin-swatch" style="' + f.style + '"></span>' +
+'<span class="cfg-fin-name"></span>';
+b.querySelector('.cfg-fin-name').textContent = f.name;
+if (f.id !== activeId) {
+b.addEventListener('click', function () { window.location.href = f.url; });
+}
+row.appendChild(b);
+if (f.id === activeId) activeDesc = f.desc;
+});
+desc.textContent = activeDesc;
+}
+/* ── Changer selon la finition de CETTE page ── */
+buildFinRow('bois');
+})();
+/* --- "Voir d'autres avis" : déplie sur place, par lots de plus en plus grands (6, puis 9, 12, 15…) --- */
+(function(){
+var btn=document.getElementById('cbxRevMore'); if(!btn) return;
+var grid=document.getElementById('cbxRevGrid'), hint=document.getElementById('cbxRevHint'), left=document.getElementById('cbxRevLeft');
+var step=parseInt(btn.dataset.step,10)||6, grow=parseInt(btn.dataset.grow,10)||3;
+function caches(){ return [].slice.call(grid.querySelectorAll('.cbx-rev[hidden]')); }
+function sync(){
+var n=caches().length;
+if(n===0){ btn.hidden=true; hint.hidden=false; btn.setAttribute('aria-expanded','true'); }
+else { left.textContent='('+n+')'; }
+}
+btn.addEventListener('click', function(){
+var lot=caches().slice(0,step); step+=grow;
+lot.forEach(function(el){ el.hidden=false; el.classList.add('cbx-rev--new'); });
+if(lot[0]){ lot[0].setAttribute('tabindex','-1'); lot[0].focus({preventScroll:true}); }
+sync();
+});
+sync();
+})();
+/* --- Preuves sociales : MODE SIMULÉ demandé par Clim-Box le 26/09/2026 (compteur de visiteurs et notifications tirés au sort,
+code fourni par le client, seul le style a été adapté). Passer CBX_SOCIAL_SIMULE à false rétablit la version réelle :
+badge « Plus de 5 000 commandes » (5 005 commandes payées au 26/09/2026) et aucune notification. --- */
+var CBX_SOCIAL_SIMULE = true;
+(function(){
+var badge=document.getElementById('cbxLive'), el=document.getElementById('cbxLiveN'); if(!badge||!el) return;
+if(!CBX_SOCIAL_SIMULE){ badge.innerHTML='<span class="cbx-live__dot"></span><span>Plus de 5 000 commandes</span>'; badge.title='5 005 commandes payées au 26/09/2026'; return; }
+var n = Math.floor(Math.random()*5) + 5;
+el.textContent = n;
+setInterval(function(){
+n = Math.min(11, Math.max(4, n + (Math.random()<0.5?-1:1)));
+el.textContent = n;
+}, 6000);
+})();
+(function(){
+var pop=document.getElementById('cbxPop'); if(!pop || !CBX_SOCIAL_SIMULE) return;
+// RGPD : prénom + ville uniquement, jamais de nom complet (liste fournie par le client)
+// ---- Images produit ----
+var pics = {
+Blanc:            "https://cdn.shopify.com/s/files/1/0567/3867/6922/files/FLUX-2026-04-14-12-07-29.jpg?v=1776161412&width=120",
+Bois:             "https://cdn.shopify.com/s/files/1/0567/3867/6922/files/7811864770944351260.jpg?v=1776160896&width=120",
+Noir:             "https://cdn.shopify.com/s/files/1/0567/3867/6922/files/Nano_Banana-2026-03-16-10-59-12.png?v=1773692407&width=120",
+Cachemire:        "https://cdn.shopify.com/s/files/1/0567/3867/6922/files/NanoBanana-2026-03-25-19-46-40.png?v=1775143511&width=120",
+FacadeChene:      "https://cdn.shopify.com/s/files/1/0567/3867/6922/files/chene_2661f0fb-7be0-456b-9655-4b54c6d27c53.png?v=1787597706&width=90",
+FacadeCachemire:  "https://cdn.shopify.com/s/files/1/0567/3867/6922/files/cachemire_6c8a8b1a-f4e0-4d33-aac0-79351c569d60.png?v=1787597500&width=90",
+MachineLaver:     "https://cdn.shopify.com/s/files/1/0567/3867/6922/files/CMC.png?v=1786309386&width=90"
+};
+// ---- Clients (prenom + ville) ----
+var clients = [
+{name:"Thierry", city:"Brignoles"}, {name:"Brice", city:"Rennes"}, {name:"Léo", city:"Metz"},
+{name:"Mickael", city:"La Seyne-sur-Mer"}, {name:"Christelle", city:"Saint-Maurice-en-Gourgois"},
+{name:"Dimitri", city:"Rochefort"}, {name:"Philippe", city:"Bayonne"}, {name:"Benoît", city:"Avernes"},
+{name:"Jean-Pierre", city:"Osenbach"}, {name:"Clément", city:"Lunel-Viel"}, {name:"Cédric", city:"Le Mée-sur-Seine"},
+{name:"Ametsa", city:"Bernis"}, {name:"Didier", city:"Toulouse"}, {name:"Christian", city:"Saint-Laurent-du-Var"},
+{name:"Julie", city:"Vailly"}, {name:"Cassandra", city:"Cutry"}, {name:"Manon", city:"Pleslin-Trigavou"},
+{name:"Véronique", city:"Falaise"}, {name:"Morgane", city:"Bordeaux"}, {name:"Jimmy", city:"Talence"},
+{name:"Marina", city:"Tarbes"}, {name:"Pascal", city:"Saint-Nazaire"}, {name:"Éric", city:"Labastide-Saint-Pierre"},
+{name:"Marie", city:"Saint-Thégonnec"}, {name:"Dany", city:"Bauvin"}, {name:"Patrick", city:"Bertrange"},
+{name:"Marie", city:"Porto-Vecchio"}, {name:"Angélique", city:"Aix-les-Bains"}, {name:"Julian", city:"Versailles"},
+{name:"Nicole", city:"Arzon"}, {name:"Rémi", city:"Bidart"}, {name:"Joseph", city:"Oloron-Sainte-Marie"},
+{name:"Lionel", city:"Saint-Bonnet-de-Four"}, {name:"Luc", city:"Marbois"}, {name:"Olivier", city:"Belvédère-Campomoro"},
+{name:"Jean", city:"Bages"}, {name:"Olivier", city:"Taverny"}, {name:"Sophie", city:"Bois-d'Arcy"},
+{name:"Nathalie", city:"Dieulouard"}, {name:"Jean", city:"Paris"}, {name:"Christine", city:"Rollot"},
+{name:"Vittorio", city:"Villeneuve-Loubet"}, {name:"Alexia", city:"Marmagne"}, {name:"Étienne", city:"Marseille"},
+{name:"Antoine", city:"Schiltigheim"}, {name:"Justine", city:"Fécamp"}, {name:"Cynthia", city:"Rozoy-sur-Serre"},
+{name:"Karine", city:"Richecourt"}, {name:"Paul", city:"Lucey"}, {name:"Maud", city:"Le Plessis-Robinson"},
+{name:"Pascal", city:"Châtellerault"}, {name:"Emmanuelle", city:"Breuil-le-Sec"}, {name:"Marie", city:"Toulouse"},
+{name:"Nicolas", city:"Le Plessis-Hébert"}, {name:"Serge", city:"Meyreuil"}, {name:"Franck", city:"Carnoules"},
+{name:"Stéphane", city:"Aubagne"}, {name:"Khouloud", city:"Garches"}, {name:"Manuel", city:"Cogolin"},
+{name:"Jean", city:"Périgueux"}, {name:"Marc", city:"Aubagne"}, {name:"Ilona", city:"Menton"},
+{name:"Alain", city:"Pietroso"}, {name:"Laurent", city:"Paris"}, {name:"Isabelle", city:"Belvédère-Campomoro"},
+{name:"Aurore", city:"Aubervilliers"}, {name:"Christine", city:"La Seyne-sur-Mer"}, {name:"Marie-Eugénie", city:"Paris"},
+{name:"Aurélie", city:"Châteauroux"}, {name:"Léo", city:"Toulouse"}, {name:"Amélie", city:"Les Pavillons-sous-Bois"},
+{name:"Jocelyne", city:"Ploufragan"}, {name:"Tom", city:"Paris"}, {name:"Émilie", city:"Malakoff"},
+{name:"Lucas", city:"Couze-Saint-Front"}, {name:"Christophe", city:"Saint-Laurent-des-Arbres"},
+{name:"Julien", city:"Saint-Jean"}, {name:"Éric", city:"La Madeleine"}, {name:"Bénédicte", city:"Challans"},
+{name:"David", city:"Hazebrouck"}, {name:"Bernard", city:"Noirmoutier-en-l'Île"}, {name:"Laura", city:"Le Ban-Saint-Martin"},
+{name:"Gilles", city:"Marseillan"}, {name:"Sylvain", city:"Le Chambon-sur-Lignon"}, {name:"Benjamin", city:"Avon"},
+{name:"Joël", city:"Sillé-le-Guillaume"}, {name:"Hakim", city:"Osny"}, {name:"Angélique", city:"Tournay"},
+{name:"Ingrid", city:"Le Havre"}, {name:"Pierrick", city:"Bordeaux"}, {name:"Matthieu", city:"Ribaute-les-Tavernes"},
+{name:"Valérie", city:"Annequin"}, {name:"Marie", city:"Saint-André-de-Seignanx"}, {name:"João", city:"Maisons-Alfort"},
+{name:"Harold", city:"Paris"}, {name:"Sylvie", city:"Forfry"}, {name:"Jacques", city:"Oullins"},
+{name:"Jacqueline", city:"La Tranclière"}, {name:"Cédric", city:"Muzillac"}, {name:"Nadine", city:"Sotteville-lès-Rouen"},
+{name:"Yves", city:"Metz"}, {name:"Pascal", city:"Vinon-sur-Verdon"}, {name:"Berivan", city:"Clichy-sous-Bois"},
+{name:"Cecilia", city:"Le Perray-en-Yvelines"}, {name:"Maxime", city:"Vichy"}, {name:"Élise", city:"Saint-Martin-aux-Bois"},
+{name:"Jean", city:"Balloy"}, {name:"Lionel", city:"Saint-Vit"}, {name:"Rachel", city:"Dole"},
+// ajouts pour élargir la liste (mélange grandes villes et petites communes)
+{name:"Sandrine", city:"Angers"}, {name:"Fabien", city:"Aast"}, {name:"Camille", city:"Grenoble"},
+{name:"Guillaume", city:"Villers-Bocage"}, {name:"Aïcha", city:"Lille"}, {name:"Romain", city:"Sennecey-le-Grand"},
+{name:"Léa", city:"Reims"}, {name:"Kevin", city:"Fresnay-sur-Sarthe"}, {name:"Charlotte", city:"Amiens"},
+{name:"Anthony", city:"Baccarat"}, {name:"Margaux", city:"Perpignan"}, {name:"Yann", city:"Peyrat-le-Château"},
+{name:"Inès", city:"Besançon"}, {name:"Florian", city:"Chécy"}, {name:"Chloé", city:"Mulhouse"},
+{name:"Sébastien", city:"Thury-Harcourt"}, {name:"Laëtitia", city:"Poitiers"}, {name:"Mathieu", city:"Lescar"},
+{name:"Océane", city:"Chambéry"}, {name:"Vincent", city:"Bourg-de-Péage"},
+{name:"Nolwenn", city:"Plouhinec"}, {name:"Damien", city:"Espelette"}, {name:"Coralie", city:"Vabres-l'Abbaye"},
+{name:"Xavier", city:"Sarrant"}, {name:"Priscilla", city:"Montréal-la-Cluse"}, {name:"Yannick", city:"Auberives-sur-Varèze"},
+{name:"Sarah", city:"Loubaresse"}, {name:"Grégory", city:"Coussac-Bonneval"}
+];
+// ---- Générateurs de produit ----
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function weightedColor(){
+return pick(["Blanc","Blanc","Blanc","Bois","Bois","Bois","Cachemire","Cachemire","Noir"]);
+}
+// dims biaisées vers le petit : min H30/L40/P8 cm, max H140/L120/P30 cm
+function skewRand(min,max){ return min + Math.pow(Math.random(),2)*(max-min); }
+function fmtCm(v){
+v = Math.round(v*2)/2;
+return (v%1===0) ? String(v) : String(v).replace('.',',');
+}
+function randDims(){
+var H = fmtCm(skewRand(30,140));
+var L = fmtCm(skewRand(40,120));
+var P = fmtCm(skewRand(8,30));
+return H+"×"+L+"×"+P+" cm";
+}
+function maybeLock(){ return Math.random()<0.15 ? " · avec serrure" : ""; }
+function genCacheTableauStandard(){
+var color=weightedColor();
+var size=pick(["Petit · 55×35×14 cm","Moyen · 75×35×14 cm","Grand · 95×35×14 cm"]);
+return {text:"Cache tableau "+color+" · "+size+maybeLock(), img:pics[color]};
+}
+function genCacheTableauSurMesure(){
+var color=weightedColor();
+return {text:"Cache tableau "+color+" sur mesure · "+randDims()+maybeLock(), img:pics[color]};
+}
+function genFacade(){
+var qty=pick([4,8,12]);
+var color=pick(["Chêne","Cachemire"]);
+var img=color==="Chêne"?pics.FacadeChene:pics.FacadeCachemire;
+return {text:"Façade de cuisine sur mesure · "+color+" (x"+qty+")", img:img};
+}
+function genMachineLaver(){
+return {text:"Cache machine à laver · Cachemire", img:pics.MachineLaver};
+}
+// ---- Construction de la séquence : blocs de 4-5 caches tableau, puis 1 façade / 1 machine en alternance ----
+var notifs=[];
+var blockCount=14;
+var fillerIsFacade=true;
+for(var b=0;b<blockCount;b++){
+var blockSize = 4 + Math.round(Math.random()); // 4 ou 5
+for(var k=0;k<blockSize;k++){
+var c=pick(clients);
+var prod = Math.random()<0.2 ? genCacheTableauStandard() : genCacheTableauSurMesure();
+notifs.push({name:c.name, city:c.city, product:prod.text, img:prod.img});
+}
+var c2=pick(clients);
+var filler = fillerIsFacade ? genFacade() : genMachineLaver();
+notifs.push({name:c2.name, city:c2.city, product:filler.text, img:filler.img});
+fillerIsFacade=!fillerIsFacade;
+}
+// ---- Affichage (style de la page : .cbx-pop / .is-on) ----
+var l1=document.getElementById('cbxPopL1'), l2=document.getElementById('cbxPopL2'), im=document.getElementById('cbxPopImg');
+var i=0, hideT;
+function minutesFor(idx){
+if(idx===0) return Math.floor(Math.random()*19)+12; // vente ancienne : 12-30 min
+if(idx===1) return 1;                                // vente toute récente : 1 min
+return Math.floor(Math.random()*50)+3;               // au hasard, au moins 3 min (max 52)
+}
+function show(){
+var dr=document.querySelector('cart-drawer'); if(dr && dr.classList.contains('active')) return;   // pas par-dessus le tiroir panier
+var s=notifs[i%notifs.length];
+var min=minutesFor(i);
+i++;
+im.src=s.img;
+l1.textContent=s.name+" à "+s.city+" a commandé";
+l2.textContent=s.product+" · il y a "+min+" min";
+pop.hidden=false; requestAnimationFrame(function(){ pop.classList.add('is-on'); });
+clearTimeout(hideT); hideT=setTimeout(function(){ pop.classList.remove('is-on'); setTimeout(function(){ pop.hidden=true; },400); },5000);
+}
+// croix : ferme la notification et n'en affiche plus pendant la visite
+try{ if(sessionStorage.getItem('cbxPopOff')==='1') return; }catch(e){}
+var t0=setTimeout(show,7000);       // 1re notif après 7 s
+var t1=setInterval(show,23000);     // puis une toutes les 23 s
+document.getElementById('cbxPopClose').addEventListener('click', function(e){
+e.stopPropagation(); clearTimeout(t0); clearInterval(t1); clearTimeout(hideT);
+pop.classList.remove('is-on'); pop.hidden=true;
+try{ sessionStorage.setItem('cbxPopOff','1'); }catch(err){}
+});
+})();
+/* --- carrousel d'avis compact --- */
+(function(){
+var box=document.getElementById('cbxRevMini'); if(!box) return;
+var track=document.getElementById('cbxRevTrack');
+var items=track.children, n=items.length, i=0, timer=null;
+var dots=document.getElementById('cbxRevDots');
+for(var k=0;k<n;k++){
+var d=document.createElement('button'); d.type='button';
+d.setAttribute('aria-label','Avis '+(k+1)); d.dataset.i=k;
+d.addEventListener('click',function(){ go(+this.dataset.i); restart(); });
+dots.appendChild(d);
+}
+function go(x){
+i=(x+n)%n;
+track.style.transform='translateX(-'+(i*100)+'%)';
+for(var k=0;k<n;k++) dots.children[k].setAttribute('aria-current', k===i?'true':'false');
+}
+box.querySelector('.cbx-revmini__nav--prev').addEventListener('click',function(){go(i-1);restart();});
+box.querySelector('.cbx-revmini__nav--next').addEventListener('click',function(){go(i+1);restart();});
+function start(){ if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches) timer=setInterval(function(){go(i+1)},6500); }
+function stop(){ clearInterval(timer); }
+function restart(){ stop(); start(); }
+box.addEventListener('mouseenter',stop); box.addEventListener('mouseleave',start);
+box.addEventListener('focusin',stop);    box.addEventListener('focusout',start);
+/* glissement tactile */
+var x0=null;
+box.addEventListener('touchstart',function(e){x0=e.touches[0].clientX;stop();},{passive:true});
+box.addEventListener('touchend',function(e){
+if(x0===null) return; var dx=e.changedTouches[0].clientX-x0;
+if(Math.abs(dx)>40) go(dx<0?i+1:i-1);
+x0=null; start();
+},{passive:true});
+go(0); start();
+})();
+/* --- marquee : duplication pour boucle continue --- */
+var mq = document.getElementById('cbxMarquee');
+mq.innerHTML += mq.innerHTML;
+}
+})();
+</script>
+    </div>
