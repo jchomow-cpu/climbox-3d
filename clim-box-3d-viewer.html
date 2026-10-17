@@ -347,9 +347,11 @@ html, body{ height:100%; margin:0; }
   var MARGE_COTE = 3; // marge conservée en haut/bas d'une découpe latérale, à 3 cm du début de la hauteur intérieure (cm)
   // centre X d'une encoche selon la distance au bord gauche (sinon centrée)
   function notchCenter(L,nwv,nxv){
-    var W=L-2*T-0.1, cnw=Math.min(nwv,W-0.1), hw=W/2, xc=0;
-    if(nxv!=null && nxv>0) xc=-hw+nxv+cnw/2;
-    return Math.max(-hw+cnw/2+0.1, Math.min(hw-cnw/2-0.1, xc));
+    // espace NOMINAL 0..L : centre nominal, puis mappé sur l'intérieur physique (×sc)
+    var sc=(L-2*T)/L, hwN=L/2, cnwN=Math.min(nwv,L), xcN=0;
+    if(nxv!=null && nxv>0) xcN=-hwN+nxv+cnwN/2;
+    xcN=Math.max(-hwN+cnwN/2, Math.min(hwN-cnwN/2, xcN));
+    return xcN*sc;
   }
 
   // config d'une découpe latérale depuis l'état (which<0 = gauche, >0 = droite)
@@ -383,7 +385,7 @@ html, body{ height:100%; margin:0; }
   function bracketCX(){ return state.L/2 - 3; }
   function bracketShownAt(px){
     if(!(state.notchTop && state.nwT>0 && state.nhT>0)) return true;   // pas d'encoche haute → matière présente
-    var tcnw = Math.min(state.nwT, (state.L-2*T-0.1)-0.1);
+    var tcnw = Math.min(state.nwT, state.L)*((state.L-2*T)/state.L);
     var txc = notchCenter(state.L, state.nwT, state.nxT);
     return !((txc - tcnw/2) < px && px < (txc + tcnw/2));              // visible tant que son centre n'est pas dans l'encoche
   }
@@ -499,7 +501,7 @@ html, body{ height:100%; margin:0; }
   function dimMat(c){return new THREE.MeshBasicMaterial({color:c});}
   function dashed(p1,p2,c){c=c||0x141414;var geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(p1[0],p1[1],p1[2]),new THREE.Vector3(p2[0],p2[1],p2[2])]);var mat=new THREE.LineDashedMaterial({color:c,dashSize:0.55,gapSize:0.4,depthTest:true,transparent:true});var ln=new THREE.Line(geo,mat);ln.computeLineDistances();ln.renderOrder=8;return ln;}
   function tube(p1,p2,r,c){var a=new THREE.Vector3(p1[0],p1[1],p1[2]),b=new THREE.Vector3(p2[0],p2[1],p2[2]),d=new THREE.Vector3().subVectors(b,a),L=d.length();if(L<1e-4)return new THREE.Object3D();var m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L,10),dimMat(c));m.position.copy(a).addScaledVector(d,0.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());return m;}
-  function makeDimLabel(txt){var mk=document.createElement('canvas'),x=mk.getContext('2d');x.font='bold 40px Inter,Arial';var w=Math.ceil(x.measureText(txt).width)+30,hh=56;mk.width=w;mk.height=hh;x=mk.getContext('2d');x.font='bold 40px Inter,Arial';x.fillStyle='rgba(26,26,26,0.94)';var r=16;x.beginPath();x.moveTo(r,0);x.arcTo(w,0,w,hh,r);x.arcTo(w,hh,0,hh,r);x.arcTo(0,hh,0,0,r);x.arcTo(0,0,w,0,r);x.closePath();x.fill();x.fillStyle='#fff';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,w/2,hh/2+2);var tx=new THREE.CanvasTexture(mk);var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthTest:true,depthWrite:false}));sp.renderOrder=30;var hCm=3.4;sp.scale.set(hCm*w/hh,hCm,1);return sp;}
+  function makeDimLabel(txt,hCm,fpx,noDepth){hCm=hCm||3.4;fpx=fpx||40;var fnt='bold '+fpx+'px Inter,Arial',hh=Math.round(fpx*1.4);var mk=document.createElement('canvas'),x=mk.getContext('2d');x.font=fnt;var w=Math.ceil(x.measureText(txt).width)+Math.round(fpx*0.75);mk.width=w;mk.height=hh;x=mk.getContext('2d');x.font=fnt;x.fillStyle='rgba(26,26,26,0.94)';var r=Math.round(hh*0.28);x.beginPath();x.moveTo(r,0);x.arcTo(w,0,w,hh,r);x.arcTo(w,hh,0,hh,r);x.arcTo(0,hh,0,0,r);x.arcTo(0,0,w,0,r);x.closePath();x.fill();x.fillStyle='#fff';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,w/2,hh/2+2);var tx=new THREE.CanvasTexture(mk);var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthTest:!noDepth,depthWrite:false}));sp.renderOrder=noDepth?34:30;sp.scale.set(hCm*w/hh,hCm,1);return sp;}
   function addDimensions(parent,L,H,P){var g=new THREE.Object3D(),col=0x141414,olv=0x6c7a00,off=4,fz=P/2,r=0.22,re=0.1;
     function fmt(v){return (Math.round(v*10)/10)+' cm';}
     function V(p){return new THREE.Vector3(p[0],p[1],p[2]);}
@@ -512,6 +514,16 @@ html, body{ height:100%; margin:0; }
       function tick(p){g.add(tube([p[0]-pp.x*tl,p[1]-pp.y*tl,p[2]-pp.z*tl],[p[0]+pp.x*tl,p[1]+pp.y*tl,p[2]+pp.z*tl],r,c));}
       tick(p1);tick(p2);
       var lb=makeDimLabel(txt);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
+    // petite cote (marges de découpe) : trait fin, petit label
+    function smallDim(p1,p2,txt,lp,c){c=c||olv;var rr=0.12;
+      g.add(tube(p1,p2,rr,c));
+      var d=new THREE.Vector3().subVectors(V(p2),V(p1)).normalize();
+      var pp=new THREE.Vector3().crossVectors(d,new THREE.Vector3(0,0,1));
+      if(pp.length()<0.1)pp=new THREE.Vector3().crossVectors(d,new THREE.Vector3(0,1,0));
+      pp.normalize(); var tl=0.6;
+      function tick(p){g.add(tube([p[0]-pp.x*tl,p[1]-pp.y*tl,p[2]-pp.z*tl],[p[0]+pp.x*tl,p[1]+pp.y*tl,p[2]+pp.z*tl],rr,c));}
+      tick(p1);tick(p2);
+      var lb=makeDimLabel(txt,2.0,30,true);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
     var ix=L/2-T, iy=H/2-T;                 // faces intérieures (utile)
     // Largeur intérieure
     var yb=-H/2-off;
@@ -526,12 +538,20 @@ html, body{ height:100%; margin:0; }
     g.add(dashed([L/2,-H/2,-P/2],[xr,-H/2,-P/2],col)); g.add(dashed([L/2,-H/2,P/2],[xr,-H/2,P/2],col));
     // Cotes de la découpe (encoche passe-câble) en olive
     function notchDims(yc,on,nwv,nhv,nxv){
-      if(!on)return; var W=L-2*T,cnw=Math.min(nwv,W-0.1),cnh=Math.min(nhv,P-0.2),sgn=(yc<0)?-1:1,yL=yc+sgn*(off-0.5),zb=-P/2;
-      var xc=notchCenter(L,nwv,nxv),xl=xc-cnw/2,xr2=xc+cnw/2;
-      dim([xl,yL,zb],[xr2,yL,zb],[xl,yc,zb],[xl,yL,zb],[xr2,yc,zb],[xr2,yL,zb],fmt(cnw),[xc,yL+sgn*2.7,zb],olv);
+      if(!on)return;
+      // Espace NOMINAL 0..L mappé sur l'intérieur physique (L-2T) : réduire la valeur réduit visiblement l'encoche.
+      var sc=(L-2*T)/L, W=L-2*T, cnwN=Math.min(nwv,L), cnw=cnwN*sc, cnh=Math.min(nhv,P-0.2),
+          sgn=(yc<0)?-1:1, yL=yc+sgn*(off-0.5), zb=-P/2, hw=W/2;
+      var xc=notchCenter(L,nwv,nxv), xl=xc-cnw/2, xr2=xc+cnw/2;
+      // Cote largeur : valeur SAISIE (cohérente avec la cote « L » du cache).
+      dim([xl,yL,zb],[xr2,yL,zb],null,null,null,null,fmt(cnwN),[xc,yL+sgn*2.7,zb],olv);
+      // Marges G/D (petites cotes) : entre chaque bord et le début de la découpe.
+      var xcN=xc/sc, mgL=(xcN-cnwN/2)+L/2, mgR=L/2-(xcN+cnwN/2);
+      if(mgL>0.4) smallDim([-hw,yL,zb],[xl,yL,zb],fmt(mgL),[(-hw+xl)/2,yL+sgn*1.9,zb],olv);
+      if(mgR>0.4) smallDim([xr2,yL,zb],[hw,yL,zb],fmt(mgR),[(xr2+hw)/2,yL+sgn*1.9,zb],olv);
       // PROFONDEUR de l'encoche : cote déportée AU-DESSUS (encoche haute) / EN-DESSOUS (encoche basse) du cache,
       // pour qu'elle ne soit jamais masquée par le panneau. Traits pointillés reliant la découpe à la cote.
-      var xd=xr2+2.2, yD=(sgn>0 ? H/2 : -H/2) + sgn*off;
+      var xd=xr2+2.2, yD=(sgn>0 ? H/2 : -H/2) + sgn*(off+4);
       dim([xd,yD,zb],[xd,yD,zb+cnh],[xd,yD,zb],[xd,yD,zb+cnh],[xd,yD,zb],[xd,yD,zb+cnh],fmt(cnh),[xd+2.8,yD,zb+cnh/2],olv);
       g.add(dashed([xd,yc,zb],[xd,yD,zb],olv)); g.add(dashed([xd,yc,zb+cnh],[xd,yD,zb+cnh],olv));
     }
@@ -749,9 +769,9 @@ html, body{ height:100%; margin:0; }
       g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
       g.setIndex(idx);return g;}
     function notchedPanel(yc, on, nwv, nhv, nxv, extL, extR){
-      var W = L - 2*T - 0.1;   // jeu 0,5mm de chaque côté
+      var W = L - 2*T;   // dessus/dessous insérés ENTRE les côtés → l'encoche haut/bas occupe la largeur intérieure
       if(on && nwv>0 && nhv>0){
-        var cnw = Math.min(nwv, W - 0.1), cnh = Math.min(nhv, P - 0.2);
+        var sc = (L-2*T)/L, cnw = Math.min(Math.min(nwv,L)*sc, W - 0.1), cnh = Math.min(nhv, P - 0.2);
         var xc = notchCenter(L,nwv,nxv);
         var xc_=xc;   // l'encoche haut/bas reste TOUJOURS une découpe en U centrée (on ne la fusionne plus avec le côté découpé)
         var geoT=makeNotchPanelGeo(W,T,P,cnw,cnh,xc_); grainUV(geoT,'y','x'); applyTopDecoupeRaw(geoT, cnh, extL, extR); // chêne ; aggloméré : arrière + parois encoche + extrémité du côté découpé

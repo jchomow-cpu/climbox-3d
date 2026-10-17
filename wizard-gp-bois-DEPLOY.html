@@ -767,13 +767,13 @@ function cbInitWizard() {
       decoupeState[pos].w=w; decoupeState[pos].d=d;
       if(decoupeState[pos].centered && w>0 && dims.l>0){ x=round1((dims.l-w)/2); document.getElementById('cbDec'+P+'X').value=x; }
       decoupeState[pos].x=x;
-      var maxW=round1(dims.l-2*BORD_HB-0.1), maxD=dims.p-MIN_BORD_AVANT, maxX=dims.l-MIN_BORD_LATERAL-w;   // largeur max = largeur réelle du panneau rendu (entre les côtés) → le trait 3D affiche le même chiffre que la case
+      var maxW=round1(dims.l), maxD=dims.p-MIN_BORD_AVANT, maxX=dims.l-MIN_BORD_LATERAL-w;   // largeur max = largeur TOTALE du cache (encoche haut/bas peut aller pleine largeur, sans marge côtés)
       var errW=w>0&&(w>maxW||w<1), errD=d>0&&(d>maxD||d<1), errX=x>0&&(x<MIN_BORD_LATERAL||(w>0&&x+w>dims.l-MIN_BORD_LATERAL));
       document.getElementById('cbDec'+P+'W').classList.toggle('error',errW);
       document.getElementById('cbDec'+P+'D').classList.toggle('error',errD);
       document.getElementById('cbDec'+P+'X').classList.toggle('error',errX);
       var wW=document.getElementById('warnDec'+P+'W'), wD=document.getElementById('warnDec'+P+'D'), wX=document.getElementById('warnDec'+P+'X');
-      if(wW){ wW.textContent=errW?'Max '+round1(maxW)+' cm (largeur entre les côtés)':''; wW.classList.toggle('visible',errW); }
+      if(wW){ wW.textContent=errW?'Max '+round1(maxW)+' cm (largeur du cache)':''; wW.classList.toggle('visible',errW); }
       if(wD){ wD.textContent=errD?'Max '+round1(maxD)+' cm (3 cm min sur le devant)':''; wD.classList.toggle('visible',errD); }
       if(wX){ if(x>0&&x<MIN_BORD_LATERAL) wX.textContent='Minimum '+MIN_BORD_LATERAL+' cm'; else if(w>0&&x+w>dims.l-MIN_BORD_LATERAL) wX.textContent='Max '+round1(maxX)+' cm (5 cm min à droite)'; else wX.textContent=''; wX.classList.toggle('visible',errX); }
       var ok=w>0&&d>0&&x>0&&!errW&&!errD&&!errX;
