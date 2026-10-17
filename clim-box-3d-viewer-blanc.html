@@ -769,12 +769,20 @@ html, body{ height:100%; margin:0; }
       g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
       g.setIndex(idx);return g;}
     function notchedPanel(yc, on, nwv, nhv, nxv, extL, extR){
-      var W = L - 2*T;   // dessus/dessous insérés ENTRE les côtés → l'encoche haut/bas occupe la largeur intérieure
+      var W = L - 2*T, hw = W/2;   // dessus/dessous insérés ENTRE les côtés → l'encoche haut/bas occupe la largeur intérieure
+      // Montant adjacent tranché jusqu'à CE bord (haut si yc>0, bas sinon) → le liseré anti-scintillement
+      // (W-0.1) n'est plus masqué par le montant : on fait rejoindre l'encoche au bord pour supprimer le bout fin.
+      var isTop = yc > 0;
+      var cutL = state.sideL && (isTop ? state.slCT : state.slCB);
+      var cutR = state.sideR && (isTop ? state.srCT : state.srCB);
       if(on && nwv>0 && nhv>0){
         var sc = (L-2*T)/L, cnw = Math.min(Math.min(nwv,L)*sc, W - 0.1), cnh = Math.min(nhv, P - 0.2);
         var xc = notchCenter(L,nwv,nxv);
-        var xc_=xc;   // l'encoche haut/bas reste TOUJOURS une découpe en U centrée (on ne la fusionne plus avec le côté découpé)
-        var geoT=makeNotchPanelGeo(W,T,P,cnw,cnh,xc_); grainUV(geoT,'y','x'); applyTopDecoupeRaw(geoT, cnh, extL, extR); // chêne ; aggloméré : arrière + parois encoche + extrémité du côté découpé
+        var nl = xc - cnw/2, nr = xc + cnw/2;
+        if(cutL && nl < -hw + 0.3) nl = -hw;   // seulement si l'encoche frôle déjà le bord (pleine largeur) : pas les marges volontaires
+        if(cutR && nr >  hw - 0.3) nr =  hw;
+        cnw = nr - nl; xc = (nl + nr)/2;
+        var geoT=makeNotchPanelGeo(W,T,P,cnw,cnh,xc); grainUV(geoT,'y','x'); applyTopDecoupeRaw(geoT, cnh, extL, extR); // chêne ; aggloméré : arrière + parois encoche + extrémité du côté découpé
         var m=new THREE.Mesh(geoT, [mats.body, mats.raw]); m.position.set(0,yc,0); cover.add(m);
       } else {
         var gB=new THREE.BoxGeometry(W, T, P); grainUV(gB,'y','x'); applyTopDecoupeRaw(gB, 0, extL, extR); // chêne ; aggloméré : arrière + extrémité du côté découpé
