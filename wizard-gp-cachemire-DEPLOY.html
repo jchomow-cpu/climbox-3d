@@ -823,16 +823,21 @@ function cbInitWizard() {
     svg.innerHTML=html;
   }
 
+  /* ── Affichage d'erreur DIFFÉRÉ : tant qu'on tape dans une case, aucune erreur pour cette case.
+        L'erreur n'apparaît qu'au blur (on quitte la case) ou au clic « Suivant ». ── */
+  var cbTouched={};
+  function cbShowDimErr(id,warnId,isErr){
+    var show = isErr && !!cbTouched[id];
+    var e=document.getElementById(id); if(e) e.classList.toggle('error', show);
+    var w=document.getElementById(warnId); if(w){ if(show) w.textContent='Valeur incorrecte'; w.classList.toggle('visible', show); }
+  }
   /* ── Calcul principal (dimensions intérieures) ── */
   window.cbCalc=function(){
-    var d=getFinalDims(), h=d.h, l=d.l, p=d.p;   // dimensions INTÉRIEURES du cache (après conversion selon le mode)
+    var d=getFinalDims(), h=d.h, l=d.l, p=d.p;   // dimensions INTÉRIEURES du cache
     var errH=h>0&&(h<20||h>MAX_H), errL=l>0&&(l<15||l>MAX_L), errP=p>0&&(p<7||p>80);
-    document.getElementById('cbInputH').classList.toggle('error',errH);
-    document.getElementById('cbInputL').classList.toggle('error',errL);
-    document.getElementById('cbInputP').classList.toggle('error',errP);
-    var wH=document.getElementById('warnH'); if(wH)wH.classList.toggle('visible',errH);
-    var wL=document.getElementById('warnL'); if(wL)wL.classList.toggle('visible',errL);
-    var wP=document.getElementById('warnP'); if(wP)wP.classList.toggle('visible',errP);
+    cbShowDimErr('cbInputH','warnH',errH);
+    cbShowDimErr('cbInputL','warnL',errL);
+    cbShowDimErr('cbInputP','warnP',errP);
     setShopifyFields(h,l,p);
     if(h>0&&l>0&&p>0&&!errH&&!errL&&!errP){
       var s=h+l+p, supp=s>THRESHOLD_CM?Math.ceil(s-THRESHOLD_CM):0;
@@ -843,7 +848,11 @@ function cbInitWizard() {
     cbUpdateSensUI();
     cbPush3D(); cbUpdateNextState(); cbUpdatePrice(); cbFillRecap();
   };
-  ['cbInputH','cbInputL','cbInputP'].forEach(function(id){ var e=document.getElementById(id); if(e)e.addEventListener('input',window.cbCalc); });
+  ['cbInputH','cbInputL','cbInputP'].forEach(function(id){ var e=document.getElementById(id); if(!e) return;
+    e.addEventListener('input', window.cbCalc);
+    e.addEventListener('focus', function(){ cbTouched[id]=false; window.cbCalc(); });   // en cours d'édition : on masque l'erreur de cette case
+    e.addEventListener('blur',  function(){ cbTouched[id]=true;  window.cbCalc(); });   // on quitte la case : on affiche l'erreur si la valeur est invalide
+  });
 
   /* ── Fermeture ── */
   window.cbSetLock=function(v){
@@ -961,12 +970,15 @@ function cbInitWizard() {
     return ok;
   }
   function cbMarkDimsReq(){
-    var ids=['cbInputH','cbInputL','cbInputP'], warns={cbInputH:'warnH',cbInputL:'warnL',cbInputP:'warnP'}, firstBad=null;
+    var ids=['cbInputH','cbInputL','cbInputP'], warns={cbInputH:'warnH',cbInputL:'warnL',cbInputP:'warnP'},
+        lim={cbInputH:[20,MAX_H],cbInputL:[15,MAX_L],cbInputP:[7,80]}, firstBad=null;
     ids.forEach(function(id){
+      cbTouched[id]=true;   // clic « Suivant » → on autorise l'affichage des erreurs
       var e=document.getElementById(id); if(!e) return;
-      var empty=!(e.value&&String(e.value).trim()!==''); var bad=empty||e.classList.contains('error');
+      var empty=!(e.value&&String(e.value).trim()!==''); var v=parseVal(id);
+      var invalid=!empty&&(v<lim[id][0]||v>lim[id][1]); var bad=empty||invalid;
       e.classList.toggle('error',bad);
-      var w=document.getElementById(warns[id]); if(w&&empty){ w.textContent='Requis'; w.classList.add('visible'); }
+      var w=document.getElementById(warns[id]); if(w){ if(bad){ w.textContent=empty?'Requis':'Valeur incorrecte'; w.classList.add('visible'); } else w.classList.remove('visible'); }
       if(bad&&!firstBad) firstBad=e;
     });
     if(firstBad&&firstBad.scrollIntoView) firstBad.scrollIntoView({block:'center',behavior:'smooth'});
