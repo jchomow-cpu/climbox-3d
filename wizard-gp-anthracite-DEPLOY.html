@@ -61,7 +61,7 @@ window.CB_PRODUCT_URL = 'https://clim-box.fr/products/cache-tableau-electrique-b
 
           <!-- ÉTAPE 1 — DIMENSIONS -->
           <div class="cb-step is-active" data-step="1">
-            <div class="cb-dims-label">Dimensions <u>intérieures</u> de votre cache (cm)</div>
+            <div class="cb-dims-label" id="cbDimsLabel">Dimensions <u>intérieures</u> du cache (cm)</div>
             <div class="cb-dims-grid">
               <div class="cb-dim-field">
                 <label>Hauteur</label>
@@ -79,7 +79,7 @@ window.CB_PRODUCT_URL = 'https://clim-box.fr/products/cache-tableau-electrique-b
                 <div class="cb-dim-warn" id="warnP">Valeur incorrecte</div>
               </div>
             </div>
-            <div class="cb-dims-tip">Partez des dimensions de votre tableau et ajoutez au moins <b>3 cm en largeur</b> (charnières) et <b>3 cm en hauteur</b> (équerres).</div>
+            <div class="cb-dims-tip" id="cbDimsTip">De planche à planche (l'ouverture intérieure). Laissez ~3 cm de marge autour de votre tableau.</div>
 
             <div class="cb-dims-label" style="margin-top:18px;">Sens d'ouverture de la porte</div>
             <div class="cb-door-opts" id="cbDoorOpts">
@@ -424,7 +424,7 @@ button[data-cb-locked]{ opacity:.5 !important; }
   .cb-modal{ padding:0; }
   .cb-modal-inner{ width:100%; height:100%; max-height:none; border-radius:0; }
   .cb-modal-grid{ flex-direction:column; }
-  .cb-modal-3d{ flex:0 0 46vh; border-right:none; border-bottom:1px solid #E5E7EB; }
+  .cb-modal-3d{ flex:0 0 53vh; border-right:none; border-bottom:1px solid #E5E7EB; }   /* 3D agrandi sur mobile */
   .cb-modal-steps{ flex:1 1 auto; min-height:0; min-width:0; }
   .cb-steps-head{ padding:14px 20px 12px; }   /* croix au-dessus du 3D en mobile → plus besoin de réserver à droite */
   .cb-dim-field input{ font-size:16px !important; }
@@ -436,23 +436,24 @@ button[data-cb-locked]{ opacity:.5 !important; }
   .cb-decoupe-toggle{ margin-top:8px !important; }
   .cb-center-toggle{ margin-bottom:6px; }
   #cbDecoupeIntro{ margin-bottom:8px !important; }
-  /* Barre de progression bien visible sur mobile */
-  .cb-progress{ height:8px !important; background:#E5E7EB !important; display:block !important; }
-  .cb-progress-fill{ height:8px !important; min-height:8px; background:#6F7F0D !important; display:block !important; }
+  /* En-tête compact : barre fine + titre réduit → place gagnée pour le 3D */
+  .cb-progress{ height:5px !important; background:#E5E7EB !important; display:block !important; margin-bottom:8px !important; }
+  .cb-progress-fill{ height:5px !important; min-height:5px; background:#6F7F0D !important; display:block !important; }
+  .cb-step-title{ font-size:15px !important; font-weight:700 !important; letter-spacing:-.2px; }
 
   /* Contenu compressé pour laisser plus de place au 3D */
-  .cb-steps-head{ padding:12px 18px 8px; }
-  .cb-steps-body{ padding:12px 18px; }
+  .cb-steps-head{ padding:8px 18px 6px; }
+  .cb-steps-body{ padding:10px 18px; }
 
   /* Nav 3 colonnes égales : Retour à gauche | prix au centre exact | Suivant à droite */
-  .cb-steps-nav{ position:relative; padding:6px 12px 2px; gap:8px; align-items:center; justify-content:flex-end; }
+  .cb-steps-nav{ position:relative; padding:4px 12px 2px; gap:8px; align-items:center; justify-content:flex-end; }
   .cb-nav-prev{
     flex:0 0 auto; min-width:0; margin:0 auto 0 0; height:auto; border:none; background:none; text-align:left;
     justify-content:flex-start; font-size:12px; font-weight:400; color:#999; padding:4px 4px; text-decoration:underline;
   }
   .cb-nav-prev:hover{ background:none; border:none; text-decoration:underline; }
   .cb-nav-priceblk{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); flex:0 0 auto; min-width:0; margin:0; align-items:center; text-align:center; }
-  .cb-nav-next, .cb-nav-valid{ flex:0 0 32%; min-width:0; margin:0; height:46px; padding:0 12px; font-size:16px; background:#A3BA1A !important; color:#FAFBFC !important; }
+  .cb-nav-next, .cb-nav-valid{ flex:0 0 32%; min-width:0; margin:0; height:42px; padding:0 12px; font-size:16px; background:#A3BA1A !important; color:#FAFBFC !important; }
   .cb-nav-price-lbl{ font-size:10px; }
   .cb-mob-price{ display:block; font-size:18px; font-weight:700; color:#171717; }
 }
@@ -510,6 +511,7 @@ button[data-cb-locked]{ opacity:.5 !important; }
 /* Encart conseil + illustrations guide (repris du live) */
 .cb-dims-tip{ font-size:13px; color:var(--cbx-text); line-height:1.45; margin-top:12px; background:var(--cbx-accent-soft); border:1px solid rgba(163,186,26,.32); border-radius:var(--cbx-r); padding:9px 12px; }
 .cb-dims-tip b{ color:var(--cbx-ink); font-weight:700; }
+/* (sélecteur de base de mesure retiré — mode unique « dimensions intérieures ») */
 .cb-guide-slot .cbx-guide{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-top:18px; padding:0; }
 .cb-guide-slot .cbx-guide__step{ display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px; min-width:0; }
 .cb-guide-slot .cbx-guide__step img{ height:134px; width:auto; max-width:100%; object-fit:contain; display:block; }
@@ -572,6 +574,7 @@ function cbInitWizard() {
   function round1(v){ return Math.round(v*10)/10; }
   function formatEuro(v){ return v.toFixed(2).replace('.', ',') + ' €'; }
   function parseVal(id){ var el=document.getElementById(id); if(!el||!el.value) return 0; return parseFloat(el.value.replace(',','.'))||0; }
+  // Dimensions INTÉRIEURES du cache saisies directement (mode unique — pas de conversion).
   function getFinalDims(){ return { h:parseVal('cbInputH'), l:parseVal('cbInputL'), p:parseVal('cbInputP') }; }
   function dimsReady(){ var d=getFinalDims(); return d.h>0 && d.l>0 && d.p>0; }
   function dimsValid(){
@@ -718,7 +721,7 @@ function cbInitWizard() {
       var errP=p>0&&(p>maxP||p<1);
       var eP=document.getElementById('cbCote'+G+'P'); if(eP)eP.classList.toggle('error',errP);
       var wP=document.getElementById('warnCote'+G+'P');
-      if(wP){ wP.textContent=errP?'Max '+maxP+' cm (5 cm de profondeur min.)':''; wP.classList.toggle('visible',errP); }
+      if(wP){ wP.textContent=errP?(p<1?'Minimum 1 cm':'Max '+maxP+' cm (5 cm de profondeur min.)'):''; wP.classList.toggle('visible',errP); }
       // --- Hauteur de la découpe : bridée à 3 cm (MARGE_BORD) des bords de la hauteur intérieure, sauf « couper » ce bord (→ jusqu'au bord extérieur, +BORD_HB) ---
       var Hin=dims.h;
       var maxH=round1(Hin - 2*MARGE_BORD + (st.cutT?MARGE_BORD+BORD_HB:0) + (st.cutB?MARGE_BORD+BORD_HB:0));
@@ -775,7 +778,7 @@ function cbInitWizard() {
       var wW=document.getElementById('warnDec'+P+'W'), wD=document.getElementById('warnDec'+P+'D'), wX=document.getElementById('warnDec'+P+'X');
       if(wW){ wW.textContent=errW?'Max '+round1(maxW)+' cm (largeur du cache)':''; wW.classList.toggle('visible',errW); }
       if(wD){ wD.textContent=errD?'Max '+round1(maxD)+' cm (3 cm min sur le devant)':''; wD.classList.toggle('visible',errD); }
-      if(wX){ if(x>0&&x<MIN_BORD_LATERAL) wX.textContent='Minimum '+MIN_BORD_LATERAL+' cm'; else if(w>0&&x+w>dims.l-MIN_BORD_LATERAL) wX.textContent='Max '+round1(maxX)+' cm (5 cm min à droite)'; else wX.textContent=''; wX.classList.toggle('visible',errX); }
+      if(wX){ if(x>0&&x<MIN_BORD_LATERAL) wX.textContent='Minimum '+MIN_BORD_LATERAL+' cm'; else if(w>0&&x+w>dims.l-MIN_BORD_LATERAL) wX.textContent='Max '+round1(maxX)+' cm (sinon la découpe dépasse à droite)'; else wX.textContent=''; wX.classList.toggle('visible',errX); }
       var ok=w>0&&d>0&&x>0&&!errW&&!errD&&!errX;
       drawSvg(pos, dims.l, dims.p, w, d, x, ok);
     });
@@ -822,7 +825,7 @@ function cbInitWizard() {
 
   /* ── Calcul principal (dimensions intérieures) ── */
   window.cbCalc=function(){
-    var h=parseVal('cbInputH'), l=parseVal('cbInputL'), p=parseVal('cbInputP');
+    var d=getFinalDims(), h=d.h, l=d.l, p=d.p;   // dimensions INTÉRIEURES du cache (après conversion selon le mode)
     var errH=h>0&&(h<20||h>MAX_H), errL=l>0&&(l<15||l>MAX_L), errP=p>0&&(p<7||p>80);
     document.getElementById('cbInputH').classList.toggle('error',errH);
     document.getElementById('cbInputL').classList.toggle('error',errL);

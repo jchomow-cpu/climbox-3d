@@ -409,6 +409,30 @@ html, body{ height:100%; margin:0; }
   camera.position.set(0, 12, 190);
   camera.lookAt(0,0,0);
 
+  // Cadrage AUTO : distance caméra calculée d'après la taille du cache ET le format de l'écran.
+  //  → sur mobile (canvas étroit) on réduit la marge, donc le cache remplit bien plus le cadre.
+  //  Le zoom manuel (molette/pincement) reste prioritaire tant que l'utilisateur n'a pas changé les dimensions.
+  var userZoomed = false;
+  function camFit(){
+    var w=viewEl.clientWidth||1, h=viewEl.clientHeight||1, aspect=w/h;
+    // On ajoute une marge pour les cotes qui dépassent du cache (cote L sous le cache, porte ouverte sur le côté).
+    var Hy=(state.H||60)+2*T, halfH=Hy/2+6, halfW=(Math.max(state.L||35, state.P||15)/2)+(state.P||15)*0.6+4;
+    var vFov=camera.fov*Math.PI/180;
+    var mob=(w<560);
+    var padV=mob?1.08:1.18, padH=mob?1.08:1.18;   // marges serrées sur mobile → cache grand, sans rogner les cotes
+    var distV=(halfH*padV)/Math.tan(vFov/2);
+    var hFov=2*Math.atan(Math.tan(vFov/2)*Math.max(aspect,0.0001));
+    var distH=(halfW*padH)/Math.tan(hFov/2);
+    return Math.max(70, Math.min(420, Math.max(distV, distH)));
+  }
+  // Applique le cadrage : distance + hauteur caméra (plus basse sur mobile → modèle bien centré, cotes non rognées) + re-visée.
+  function applyFit(){
+    CAM_END_Z = camFit();
+    camera.position.z = CAM_END_Z;
+    camera.position.y = (viewEl.clientWidth<560) ? 3 : 12;
+    camera.lookAt(0,0,0);
+  }
+
   scene.add(new THREE.HemisphereLight(0xffffff, 0x9a9a9a, 0.6));
   var key = new THREE.DirectionalLight(0xffffff, 0.95); key.position.set(60,90,80); scene.add(key);
   var fill = new THREE.DirectionalLight(0xffffff, 0.35); fill.position.set(-70,30,-40); scene.add(fill);
@@ -498,10 +522,24 @@ html, body{ height:100%; margin:0; }
     });
   }
 
-  function dimMat(c){return new THREE.MeshBasicMaterial({color:c});}
-  function dashed(p1,p2,c){c=c||0x141414;var geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(p1[0],p1[1],p1[2]),new THREE.Vector3(p2[0],p2[1],p2[2])]);var mat=new THREE.LineDashedMaterial({color:c,dashSize:0.55,gapSize:0.4,depthTest:true,transparent:true});var ln=new THREE.Line(geo,mat);ln.computeLineDistances();ln.renderOrder=8;return ln;}
+  function dimMat(c){return new THREE.MeshBasicMaterial({color:c,depthWrite:false});}   // n'écrit pas la profondeur → les chiffres (dessinés après) passent toujours AU-DESSUS des traits
+  function dashed(p1,p2,c){c=c||0x141414;var geo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(p1[0],p1[1],p1[2]),new THREE.Vector3(p2[0],p2[1],p2[2])]);var mat=new THREE.LineDashedMaterial({color:c,dashSize:0.55,gapSize:0.4,depthTest:true,depthWrite:false,transparent:true});var ln=new THREE.Line(geo,mat);ln.computeLineDistances();ln.renderOrder=8;return ln;}
   function tube(p1,p2,r,c){var a=new THREE.Vector3(p1[0],p1[1],p1[2]),b=new THREE.Vector3(p2[0],p2[1],p2[2]),d=new THREE.Vector3().subVectors(b,a),L=d.length();if(L<1e-4)return new THREE.Object3D();var m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L,10),dimMat(c));m.position.copy(a).addScaledVector(d,0.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize());return m;}
-  function makeDimLabel(txt,hCm,fpx,noDepth){hCm=hCm||3.4;fpx=fpx||40;var fnt='bold '+fpx+'px Inter,Arial',hh=Math.round(fpx*1.4);var mk=document.createElement('canvas'),x=mk.getContext('2d');x.font=fnt;var w=Math.ceil(x.measureText(txt).width)+Math.round(fpx*0.75);mk.width=w;mk.height=hh;x=mk.getContext('2d');x.font=fnt;x.fillStyle='rgba(26,26,26,0.94)';var r=Math.round(hh*0.28);x.beginPath();x.moveTo(r,0);x.arcTo(w,0,w,hh,r);x.arcTo(w,hh,0,hh,r);x.arcTo(0,hh,0,0,r);x.arcTo(0,0,w,0,r);x.closePath();x.fill();x.fillStyle='#fff';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,w/2,hh/2+2);var tx=new THREE.CanvasTexture(mk);var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthTest:!noDepth,depthWrite:false}));sp.renderOrder=noDepth?34:30;sp.scale.set(hCm*w/hh,hCm,1);return sp;}
+  function makeDimLabel(txt,hCm,fpx,noDepth,col){
+    hCm=hCm||3.1;fpx=fpx||40;
+    var fnt='bold '+fpx+'px Inter,Arial',hh=Math.round(fpx*1.5);
+    var mk=document.createElement('canvas'),x=mk.getContext('2d');x.font=fnt;
+    var w=Math.ceil(x.measureText(txt).width)+Math.round(fpx*0.55);
+    mk.width=w;mk.height=hh;x=mk.getContext('2d');x.font=fnt;
+    x.textAlign='center';x.textBaseline='middle';
+    // SANS case : texte avec halo blanc (lisible sur le blanc du cache comme sur les parties sombres) + couleur par type
+    x.lineJoin='round';x.miterLimit=2;x.strokeStyle='rgba(255,255,255,0.95)';x.lineWidth=Math.max(3,Math.round(fpx*0.34));
+    x.strokeText(txt,w/2,hh/2);
+    var css=(typeof col==='number')?('#'+('000000'+(col>>>0).toString(16)).slice(-6)):(col||'#161616');
+    x.fillStyle=css;x.fillText(txt,w/2,hh/2);
+    var tx=new THREE.CanvasTexture(mk);
+    var sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthTest:!noDepth,depthWrite:false}));
+    sp.renderOrder=noDepth?34:30;sp.scale.set(hCm*w/hh,hCm,1);return sp;}
   function addDimensions(parent,L,H,P){var g=new THREE.Object3D(),col=0x141414,olv=0x6c7a00,off=4,fz=P/2,r=0.22,re=0.1;
     function fmt(v){return (Math.round(v*10)/10)+' cm';}
     function V(p){return new THREE.Vector3(p[0],p[1],p[2]);}
@@ -513,7 +551,7 @@ html, body{ height:100%; margin:0; }
       pp.normalize(); var tl=1.0;
       function tick(p){g.add(tube([p[0]-pp.x*tl,p[1]-pp.y*tl,p[2]-pp.z*tl],[p[0]+pp.x*tl,p[1]+pp.y*tl,p[2]+pp.z*tl],r,c));}
       tick(p1);tick(p2);
-      var lb=makeDimLabel(txt);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
+      var lb=makeDimLabel(txt,null,null,false,c);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
     // petite cote (marges de découpe) : trait fin, petit label
     function smallDim(p1,p2,txt,lp,c){c=c||olv;var rr=0.12;
       g.add(tube(p1,p2,rr,c));
@@ -523,7 +561,7 @@ html, body{ height:100%; margin:0; }
       pp.normalize(); var tl=0.6;
       function tick(p){g.add(tube([p[0]-pp.x*tl,p[1]-pp.y*tl,p[2]-pp.z*tl],[p[0]+pp.x*tl,p[1]+pp.y*tl,p[2]+pp.z*tl],rr,c));}
       tick(p1);tick(p2);
-      var lb=makeDimLabel(txt,2.0,30,true);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
+      var lb=makeDimLabel(txt,2.0,30,true,c);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
     var ix=L/2-T, iy=H/2-T;                 // faces intérieures (utile)
     // Largeur intérieure
     var yb=-H/2-off;
@@ -533,56 +571,37 @@ html, body{ height:100%; margin:0; }
     var xin=-(L/2-T)+5, zh=P/2-2;
     dim([xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],[xin,-iy,zh],[xin,iy,zh],'H '+fmt(H-2*T),[xin+4.5,0,zh-3]);
     // Profondeur intérieure (caisson ouvert)
-    var xr=L/2+off;
-    dim([xr,-H/2,-P/2],[xr,-H/2,P/2],[L/2,-H/2,-P/2],[xr,-H/2,-P/2],[L/2,-H/2,P/2],[xr,-H/2,P/2],'P '+fmt(P),[xr+4,-H/2-4,0]);
-    g.add(dashed([L/2,-H/2,-P/2],[xr,-H/2,-P/2],col)); g.add(dashed([L/2,-H/2,P/2],[xr,-H/2,P/2],col));
+    var xpin=(L/2-T)-5, ypin=-(H/2-T)+1;   // P à l'INTÉRIEUR du cache : le long du plancher intérieur (côté droit), arrière→avant — demandé
+    dim([xpin,ypin,-P/2],[xpin,ypin,P/2],null,null,null,null,'P '+fmt(P),[xpin-3,ypin+1.5,0]);
     // Cotes de la découpe (encoche passe-câble) en olive
     function notchDims(yc,on,nwv,nhv,nxv){
       if(!on)return;
       // Espace NOMINAL 0..L mappé sur l'intérieur physique (L-2T) : réduire la valeur réduit visiblement l'encoche.
       var sc=(L-2*T)/L, W=L-2*T, cnwN=Math.min(nwv,L), cnw=cnwN*sc, cnh=Math.min(nhv,P-0.2),
-          sgn=(yc<0)?-1:1, yL=yc+sgn*(off-0.5), zb=-P/2, hw=W/2;
+          sgn=(yc<0)?-1:1, yL=yc-sgn*4, zb=-P/2, hw=W/2;   // LARGEUR à l'INTÉRIEUR du cache (sous la découpe) — demandé
       var xc=notchCenter(L,nwv,nxv), xl=xc-cnw/2, xr2=xc+cnw/2;
-      // Cote largeur : valeur SAISIE (cohérente avec la cote « L » du cache).
-      dim([xl,yL,zb],[xr2,yL,zb],null,null,null,null,fmt(cnwN),[xc,yL+sgn*2.7,zb],olv);
+      // (Cote largeur de découpe retirée — redondante avec les marges G/D ; affichage épuré conforme au ss client.)
       // Marges G/D (petites cotes) : entre chaque bord et le début de la découpe.
       var xcN=xc/sc, mgL=(xcN-cnwN/2)+L/2, mgR=L/2-(xcN+cnwN/2);
-      if(mgL>0.4) smallDim([-hw,yL,zb],[xl,yL,zb],fmt(mgL),[(-hw+xl)/2,yL+sgn*1.9,zb],olv);
-      if(mgR>0.4) smallDim([xr2,yL,zb],[hw,yL,zb],fmt(mgR),[(xr2+hw)/2,yL+sgn*1.9,zb],olv);
-      // PROFONDEUR de l'encoche : cote déportée AU-DESSUS (encoche haute) / EN-DESSOUS (encoche basse) du cache,
-      // pour qu'elle ne soit jamais masquée par le panneau. Traits pointillés reliant la découpe à la cote.
-      var xd=xr2+2.2, yD=(sgn>0 ? H/2 : -H/2) + sgn*(off+4);
-      dim([xd,yD,zb],[xd,yD,zb+cnh],[xd,yD,zb],[xd,yD,zb+cnh],[xd,yD,zb],[xd,yD,zb+cnh],fmt(cnh),[xd+2.8,yD,zb+cnh/2],olv);
+      // Petites cotes de marge : seulement pour un petit écart (sinon long trait inutile qui encombre ; la position est déjà dans le champ « Dist. bord gauche »).
+      if(mgL>0.4 && mgL<=8) smallDim([-hw,yL,zb],[xl,yL,zb],fmt(mgL),[(-hw+xl)/2,yL-sgn*1.6,zb],olv);
+      if(mgR>0.4 && mgR<=8) smallDim([xr2,yL,zb],[hw,yL,zb],fmt(mgR),[(xr2+hw)/2,yL-sgn*1.6,zb],olv);
+      // PROFONDEUR de l'encoche : cote À L'EXTÉRIEUR du cache, juste au bord (pas trop loin) — demandé.
+      var xd=xc, yD=(sgn>0 ? H/2 : -H/2) + sgn*3;
+      dim([xd,yD,zb],[xd,yD,zb+cnh],[xd,yD,zb],[xd,yD,zb+cnh],[xd,yD,zb],[xd,yD,zb+cnh],fmt(cnh),[xd,yD+sgn*1.4,zb+cnh/2],olv);
       g.add(dashed([xd,yc,zb],[xd,yD,zb],olv)); g.add(dashed([xd,yc,zb+cnh],[xd,yD,zb+cnh],olv));
     }
     notchDims(-H/2+T/2, state.notch, state.nw, state.nh, state.nx);
     notchDims( H/2-T/2, state.notchTop, state.nwT, state.nhT, state.nxT);
-    // Cotes « mesure utile » (or) — liées aux équerres : on les retire quand les équerres disparaissent.
-    if(bracketsVisible()){
-    (function(){var gold=0xc8a96e;
-      // Largeur UTILE : la charnière ressort de hp=2,5 cm du bois → elle réduit la largeur utile de 2,5 cm.
-      //  Côté planche = ras du côté (L/2-T, validé). Côté charnière = collé à la charnière. Longueur du trait = largeur saisie − 2,5 (− 5 si double porte).
-      var hp=2.5, vis=2, isDouble=(L>60), x1, x2, uw;   // vis = on rentre le DÉBUT (côté charnière) de 2 cm vers l'intérieur pour qu'il soit visible (la mesure affichée, elle, ne change pas)
-      if(isDouble){ uw=L-2*hp; x1=-uw/2+vis-1.5; x2=uw/2-vis+1.5; }   // double porte : trait rallongé de 3 cm (1,5 de chaque côté), chiffre inchangé
-      else if(state.hinge==='D'){ uw=L-hp; x1=-(L/2-T); x2=x1+uw-vis; }   // planche à gauche, charnière à droite (rentrée de vis)
-      else {                      uw=L-hp; x2=(L/2-T);  x1=x2-uw+vis; }   // planche à droite, charnière à gauche (rentrée de vis)
-      var yC=H/2-7;
-      dim([x1,yC,fz],[x2,yC,fz],[x1,yC+1.6,fz],[x1,yC-1.6,fz],[x2,yC+1.6,fz],[x2,yC-1.6,fz],fmt(uw),[(x1+x2)/2,yC-2.7,fz-3],gold);})();
-    (function(){var gold=0xc8a96e;
-      var ixb=L/2-T-2.4+1, zEq=-P/2+0.4, visH=1.5;   // visH : le trait part 1,5 cm plus bas côté équerre (la mesure affichée ne change pas)
-      var uh=(H-2*T)-3;                               // hauteur utile affichée = hauteur intérieure saisie − 3 (équerre)
-      var ybas=-(H/2)+T, yhaut=(H/2-3)-visH;          // bas : touche la planche (dessous) ; haut : équerre − descendu de visH
-      dim([ixb,ybas,zEq],[ixb,yhaut,zEq],[ixb-1.6,ybas,zEq],[ixb+1.6,ybas,zEq],[ixb-1.6,yhaut,zEq],[ixb+1.6,yhaut,zEq],fmt(uh),[ixb-5,(ybas+yhaut)/2,zEq],gold);})();
-    }
+    // Cotes « mesure utile » (or) retirées — elles se chevauchaient avec les cotes de découpe ; affichage épuré conforme au ss client.
     // --- cotes des DÉCOUPES LATÉRALES (sur la face du côté) ---
     function sideDims(sign, cfg){
       var cut = sideCutGeom(cfg, H, P);
       if(!cut) return;
       var cd=cut.cd, yB=cut.yB, yT=cut.yT, hD=yT-yB, hhD=hD/2, ycD=(yB+yT)/2;
-      var xf=sign*(L/2+3), zb=-P/2;   // cote flottante à côté du panneau, encoche au bord arrière zb
-      var yw=yB-2.2;                  // profondeur (le long de z depuis l'arrière), sous l'encoche
-      dim([xf,yw,zb],[xf,yw,zb+cd],[xf,yw,zb],[xf,yw,zb+cd],[xf,yw,zb],[xf,yw,zb+cd],fmt(cd),[xf,yw-2,zb+cd/2],olv);
-      g.add(dashed([xf,yB,zb],[xf,yw,zb],olv)); g.add(dashed([xf,yB,zb+cd],[xf,yw,zb+cd],olv));
+      var xf=sign*(L/2+3), xfd=sign*(L/2-T/2), zb=-P/2;   // xf = cote hauteur (à côté) ; xfd = cote profondeur DANS l'axe de la planche du côté — demandé
+      var yw=yB+(yT-yB)/3;            // à ~1/3 de la hauteur de la découpe
+      dim([xfd,yw,zb],[xfd,yw,zb+cd],null,null,null,null,fmt(cd),[xfd,yw+1.8,zb],olv);
       var zh=zb+cd+2.0;              // hauteur (le long de y), vers l'avant de l'encoche
       dim([xf,ycD-hhD,zh],[xf,ycD+hhD,zh],[xf,ycD-hhD,zh],[xf,ycD+hhD,zh],[xf,ycD-hhD,zh],[xf,ycD+hhD,zh],fmt(hD),[xf,ycD,zh+2.2],olv);
       g.add(dashed([xf,ycD-hhD,zb+cd],[xf,ycD-hhD,zh],olv)); g.add(dashed([xf,ycD+hhD,zb+cd],[xf,ycD+hhD,zh],olv));
@@ -961,7 +980,7 @@ html, body{ height:100%; margin:0; }
       var dy=e.touches[1].clientY-e.touches[0].clientY;
       var dist=Math.sqrt(dx*dx+dy*dy);
       var mid={x:(e.touches[0].clientX+e.touches[1].clientX)/2, y:(e.touches[0].clientY+e.touches[1].clientY)/2};
-      camera.position.z = Math.max(110, Math.min(320, camera.position.z - (dist-lastTouchDist)*0.3));
+      camera.position.z = Math.max(70, Math.min(360, camera.position.z - (dist-lastTouchDist)*0.3)); userZoomed=true;
       model.position.x = Math.max(-32, Math.min(32, model.position.x + (mid.x-lastTouchMid.x)*0.08));
       model.position.y = Math.max(-32, Math.min(32, model.position.y - (mid.y-lastTouchMid.y)*0.08));
       lastTouchDist=dist;
@@ -971,7 +990,7 @@ html, body{ height:100%; margin:0; }
   canvas.addEventListener("touchend", function(e){ touching=e.touches.length; onUp(); });
   canvas.addEventListener("wheel", function(e){
     e.preventDefault();
-    camera.position.z = Math.max(110, Math.min(320, camera.position.z + e.deltaY*0.12));
+    camera.position.z = Math.max(70, Math.min(360, camera.position.z + e.deltaY*0.12)); userZoomed=true;
   }, {passive:false});
 
   // ---- Pad de déplacement (pan) : flèches pour se décaler dans la vue (et pas seulement pivoter) ----
@@ -996,6 +1015,7 @@ html, body{ height:100%; margin:0; }
     var w = viewEl.clientWidth, h = viewEl.clientHeight;
     renderer.setSize(w, h, false);
     camera.aspect = w/h; camera.updateProjectionMatrix();
+    if(introDone && !userZoomed){ applyFit(); }
   }
   if(window.ResizeObserver){ new ResizeObserver(resize).observe(viewEl); }
   window.addEventListener("resize", resize);
@@ -1079,8 +1099,7 @@ html, body{ height:100%; margin:0; }
       if(t >= 1){
         introDone = true;
         setDoorAngle(state.open);
-        camera.position.z = CAM_END_Z;
-        camera.position.y = CAM_END_Y;
+        applyFit();
       }
     }
 
@@ -1247,6 +1266,7 @@ html, body{ height:100%; margin:0; }
     var tD=root.querySelector('#cbx-sideR'); if(tD){tD.checked=state.sideR; var cD=root.querySelector('#cbx-sideR-ctrl'); if(cD)cD.classList.toggle('is-off',!state.sideR);}
     if(typeof setActivePreset==='function') setActivePreset('custom');
     build(); syncReadout();
+    userZoomed=false; if(introDone){ applyFit(); }   // re-cadrage auto quand les dimensions changent
   }
   (function cbBridgeInit(){
     var doc=cbSiteDoc();
@@ -1268,7 +1288,7 @@ html, body{ height:100%; margin:0; }
   // ---- init ----
   setActivePreset("75");
   camera.position.set(0, 60, 420); // position de départ pour l'intro
-  resize(); build(); syncReadout(); requestAnimationFrame(loop);
+  resize(); build(); syncReadout(); CAM_END_Z = camFit(); requestAnimationFrame(loop);
   // Les cotes 3D sont rendues sur canvas : on reconstruit une fois Inter chargée pour qu'elles l'utilisent (sinon fallback Arial au 1er rendu).
   try{ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ cbLastKey=''; build(); syncReadout(); }); }catch(e){}
 })();
