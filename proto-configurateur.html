@@ -123,7 +123,12 @@ img{max-width:100%}
 .modal{background:var(--panel);width:100%;border-radius:22px 22px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));max-height:88vh;overflow-y:auto}
 .modal h2{margin:0 0 4px;font-size:18px}
 .modal p{font-size:13.5px;line-height:1.5;color:var(--muted);margin:8px 0}
+.meas{margin:4px 0 0;padding-left:20px;font-size:13px;line-height:1.5;color:var(--muted)}
+.meas li{margin-bottom:5px}
+.meas b{color:var(--ink);font-weight:700}
+.meas span{color:var(--muted);font-weight:400}
 .guide-svg{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel2);margin:10px 0}
+.guide-img{display:block;width:100%;max-width:360px;margin:12px auto;border:1px solid var(--line);border-radius:14px;background:#fff}
 .modal .done{width:100%;margin-top:12px;border:0;border-radius:13px;background:var(--accent-bright);color:#16170F;font-weight:700;padding:13px;font-size:15px}
 
 #toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(14px);z-index:70;background:var(--ink);color:var(--bg1);padding:11px 16px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90vw;text-align:center}
@@ -237,15 +242,9 @@ img{max-width:100%}
 <div class="overlay" id="overlay">
   <div class="modal">
     <h2>Comment mesurer</h2>
-    <p>Mesurez l'<b>ouverture intérieure</b> souhaitée, de planche à planche. Prévoyez environ <b>3 cm de marge</b> autour de votre tableau électrique.</p>
-    <svg class="guide-svg" viewBox="0 0 320 180" role="img" aria-label="Schéma de mesure">
-      <rect x="70" y="30" width="180" height="120" rx="4" fill="none" stroke="var(--accent)" stroke-width="2"/>
-      <rect x="92" y="52" width="136" height="76" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 4"/>
-      <line x1="70" y1="166" x2="250" y2="166" stroke="var(--ink)" stroke-width="1.5"/>
-      <text x="160" y="178" text-anchor="middle" font-size="11" fill="var(--ink)" font-family="Inter">Largeur</text>
-      <line x1="54" y1="30" x2="54" y2="150" stroke="var(--ink)" stroke-width="1.5"/>
-      <text x="40" y="94" text-anchor="middle" font-size="11" fill="var(--ink)" font-family="Inter" transform="rotate(-90 40 94)">Hauteur</text>
-    </svg>
+    <p>Les mesures des cases sont les <b>dimensions intérieures du cache</b>. Mesurez votre <b>tableau (ou compteur)</b>, puis ajoutez les marges ci-dessous — pour le passage des <b>charnières</b> et des <b>équerres</b> :</p>
+    <img class="guide-img" src="guide-mesure.webp" alt="Le cache se pose autour du tableau : +3 cm en hauteur, +3 cm en largeur, +1 cm en profondeur" loading="lazy">
+    <p style="font-size:12.5px"><b>+3 cm</b> en hauteur · <b>+3 cm</b> en largeur · <b>+1 cm</b> en profondeur.</p>
     <button class="done" id="guideDone">J'ai compris</button>
   </div>
 </div>
