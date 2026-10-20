@@ -80,6 +80,8 @@ img{max-width:100%}
 .cstep input:focus{outline:none;border-color:var(--accent-bright);box-shadow:0 0 0 3px var(--accent-soft)}
 .cstep.err input{border-color:var(--err);background:rgba(217,84,78,.08)}
 .errmsg{color:var(--err);font-size:11px;text-align:center;margin-top:5px;min-height:0}
+.extdim{margin-top:10px;font-size:12.5px;color:var(--muted);text-align:center;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.extdim b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
 .linklike{background:none;border:0;color:var(--accent);font-weight:600;font-size:13px;padding:12px 0 2px;text-decoration:underline;text-underline-offset:3px}
 
 .seg{display:flex;gap:8px}
@@ -105,7 +107,10 @@ img{max-width:100%}
 .subdims .dimcell .lab{text-align:left;font-size:11.5px}
 
 #bar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--panel);border-top:1px solid var(--line);
-  padding:8px 16px calc(4px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.06)}
+  padding:7px 16px calc(4px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;box-shadow:0 -4px 20px rgba(0,0,0,.06)}
+.bar-reassure{font-size:11px;color:var(--muted);text-align:center;font-weight:600}
+.bar-reassure b{color:var(--ink);font-weight:700}
+.barrow{display:flex;align-items:center;gap:12px}
 #bar .price{flex:0 0 auto}
 #bar .price .lbl{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 #bar .price .val{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.05}
@@ -161,6 +166,7 @@ img{max-width:100%}
           <div class="cstep" data-k="P"><button data-d="-1" aria-label="moins">−</button><input id="inP" inputmode="decimal" value="15" aria-label="Profondeur en cm"><button data-d="1" aria-label="plus">+</button></div></div>
       </div>
       <div class="errmsg" id="errMsg"></div>
+      <div class="extdim" id="extDim" hidden></div>
       <button class="linklike" id="helpBtn">Comment mesurer mon tableau ?</button>
       <p class="hint">De planche à planche (l'ouverture intérieure). Prévoyez ~3 cm de marge autour de votre tableau.</p>
     </div>
@@ -177,19 +183,20 @@ img{max-width:100%}
           </div>
         </div>
 
-        <div class="opt"><div class="txt"><b>Découpe haute</b><span>passe-câble en haut</span></div><button class="sw-toggle" id="dHaut"></button></div>
+        <div class="adv-sub" style="margin:2px 0 -2px"><label>Découpes pour goulottes &amp; câbles</label></div>
+        <div class="opt"><div class="txt"><b>Découpe haute</b></div><button class="sw-toggle" id="dHaut"></button></div>
         <div class="subdims" id="subHaut" hidden>
           <div class="dimcell"><div class="lab">Largeur</div><div class="cstep" data-k="NWt"><button data-d="-1">−</button><input id="inNWt" inputmode="decimal" value="12"><button data-d="1">+</button></div></div>
           <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="NDt"><button data-d="-1">−</button><input id="inNDt" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
         </div>
 
-        <div class="opt"><div class="txt"><b>Découpe basse</b><span>passe-câble en bas</span></div><button class="sw-toggle" id="dBas"></button></div>
+        <div class="opt"><div class="txt"><b>Découpe basse</b></div><button class="sw-toggle" id="dBas"></button></div>
         <div class="subdims" id="subBas" hidden>
           <div class="dimcell"><div class="lab">Largeur</div><div class="cstep" data-k="NWb"><button data-d="-1">−</button><input id="inNWb" inputmode="decimal" value="12"><button data-d="1">+</button></div></div>
           <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="NDb"><button data-d="-1">−</button><input id="inNDb" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
         </div>
 
-        <div class="opt"><div class="txt"><b>Découpe côté gauche</b><span>sur le flanc</span></div><button class="sw-toggle" id="dSG"></button></div>
+        <div class="opt"><div class="txt"><b>Découpe côté gauche</b></div><button class="sw-toggle" id="dSG"></button></div>
         <div id="subSG" hidden>
           <div class="subdims">
             <div class="dimcell" id="cellSHg"><div class="lab">Hauteur</div><div class="cstep" data-k="SHg"><button data-d="-1">−</button><input id="inSHg" inputmode="decimal" value="10"><button data-d="1">+</button></div></div>
@@ -199,7 +206,7 @@ img{max-width:100%}
           <div class="opt" style="padding:9px 0"><div class="txt"><b>Couper tout le bas</b><span>jusqu'au bord inférieur</span></div><button class="sw-toggle" id="cutBG"></button></div>
         </div>
 
-        <div class="opt"><div class="txt"><b>Découpe côté droit</b><span>sur le flanc</span></div><button class="sw-toggle" id="dSD"></button></div>
+        <div class="opt"><div class="txt"><b>Découpe côté droit</b></div><button class="sw-toggle" id="dSD"></button></div>
         <div id="subSD" hidden>
           <div class="subdims">
             <div class="dimcell" id="cellSHd"><div class="lab">Hauteur</div><div class="cstep" data-k="SHd"><button data-d="-1">−</button><input id="inSHd" inputmode="decimal" value="10"><button data-d="1">+</button></div></div>
@@ -219,8 +226,11 @@ img{max-width:100%}
 </section>
 
 <div id="bar">
-  <div class="price"><div class="lbl">Votre prix</div><div class="val" id="priceVal">117,95 €</div></div>
-  <button class="cta" id="cta">Ajouter au panier</button>
+  <div class="bar-reassure">🚚 <b>Livraison à domicile</b> · fabrication sur mesure</div>
+  <div class="barrow">
+    <div class="price"><div class="lbl">Votre prix</div><div class="val" id="priceVal">117,95 €</div></div>
+    <button class="cta" id="cta">Ajouter au panier</button>
+  </div>
 </div>
 
 <div class="overlay" id="overlay">
@@ -281,7 +291,12 @@ img{max-width:100%}
     $('#errMsg').textContent=msgs[0]||'';
   }
   function refreshPrice(){ $('#priceVal').textContent=euro(price()); }
-  function sync(){ refreshPrice(); showErr(); push(); }
+  function fnum(n){return (Math.round(n*10)/10).toString().replace('.',',');}
+  function refreshExt(){ var el=$('#extDim'); if(!el)return;
+    if(state.H>0&&state.L>0&&state.P>0){ el.hidden=false;
+      el.innerHTML='Encombrement total : <b>H '+fnum(state.H+3.6)+' · L '+fnum(state.L+3.6)+' · P '+fnum(state.P+1.8)+' cm</b>'; }
+    else el.hidden=true; }
+  function sync(){ refreshPrice(); refreshExt(); showErr(); push(); }
 
   /* ---- steppers ----
      dimensions principales : 3D en direct ; dimensions de découpe : 3D mis à jour au blur
