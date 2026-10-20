@@ -305,6 +305,10 @@ html, body{ height:100%; margin:0; }
 #cbx-cfg .cbx-pan-down::after{border-left:4px solid transparent; border-right:4px solid transparent; border-top:5px solid currentColor}
 #cbx-cfg .cbx-pan-left::after{border-top:4px solid transparent; border-bottom:4px solid transparent; border-right:5px solid currentColor}
 #cbx-cfg .cbx-pan-right::after{border-top:4px solid transparent; border-bottom:4px solid transparent; border-left:5px solid currentColor}
+/* Mode prototype : HUD porte/cotes plus fin et collé à gauche (libère de la place) */
+.cbx-proto #cbx-cfg .cbx-bar{ left:2px !important; bottom:8px !important; padding:6px 5px !important; gap:7px !important; border-radius:11px !important; background:rgba(255,255,255,.78) !important; box-shadow:0 3px 14px rgba(0,0,0,.08) !important; }
+.cbx-proto #cbx-cfg .cbx-bar-row{ font-size:9px !important; }
+.cbx-proto #cbx-cfg .cbx-bar-toggle{ font-size:9.5px !important; }
 @media (max-width:760px){
   #cbx-cfg .cbx-view{min-height:400px}
   /* HUD mobile : colonne compacte à gauche (slider vertical + Cotes), sans flèches, cadre ajusté au slider */
@@ -413,17 +417,19 @@ html, body{ height:100%; margin:0; }
   //  → sur mobile (canvas étroit) on réduit la marge, donc le cache remplit bien plus le cadre.
   //  Le zoom manuel (molette/pincement) reste prioritaire tant que l'utilisateur n'a pas changé les dimensions.
   var userZoomed = false;
+  var PROTO = /[?&]proto=1/.test(location.search||'');   // mode prototype mobile : léger dézoom + HUD plus fin/plus à gauche
+  if(PROTO){try{document.documentElement.classList.add('cbx-proto');}catch(_){}}
   function camFit(){
     var w=viewEl.clientWidth||1, h=viewEl.clientHeight||1, aspect=w/h;
     // On ajoute une marge pour les cotes qui dépassent du cache (cote L sous le cache, porte ouverte sur le côté).
     var Hy=(state.H||60)+2*T, halfH=Hy/2+6, halfW=(Math.max(state.L||35, state.P||15)/2)+(state.P||15)*0.6+4;
     var vFov=camera.fov*Math.PI/180;
     var mob=(w<560);
-    var padV=mob?1.08:1.18, padH=mob?1.08:1.18;   // marges serrées sur mobile → cache grand, sans rogner les cotes
+    var padV=mob?1.30:1.18, padH=mob?1.30:1.18;   // mobile : marge confortable (moins zoomé) autour du cache + cotes
     var distV=(halfH*padV)/Math.tan(vFov/2);
     var hFov=2*Math.atan(Math.tan(vFov/2)*Math.max(aspect,0.0001));
     var distH=(halfW*padH)/Math.tan(hFov/2);
-    return Math.max(70, Math.min(420, Math.max(distV, distH)));
+    return Math.max(70, Math.min(480, Math.max(distV, distH)));   // le cache remplit l'espace dédié (plus de dézoom PROTO)
   }
   // Applique le cadrage : distance + hauteur caméra (plus basse sur mobile → modèle bien centré, cotes non rognées) + re-visée.
   function applyFit(){
@@ -543,15 +549,16 @@ html, body{ height:100%; margin:0; }
   function addDimensions(parent,L,H,P){var g=new THREE.Object3D(),col=0x141414,olv=0x6c7a00,off=4,fz=P/2,r=0.22,re=0.1;
     function fmt(v){return (Math.round(v*10)/10)+' cm';}
     function V(p){return new THREE.Vector3(p[0],p[1],p[2]);}
-    function dim(p1,p2,e1a,e1b,e2a,e2b,txt,lp,c){c=c||col;
-      g.add(tube(p1,p2,r,c));
+    function dim(p1,p2,e1a,e1b,e2a,e2b,txt,lp,c,onTop){c=c||col;
+      function top(m){ if(onTop&&m&&m.material){m.material.depthTest=false;m.renderOrder=33;} return m; }
+      g.add(top(tube(p1,p2,r,c)));
       var d=new THREE.Vector3().subVectors(V(p2),V(p1)).normalize();
       var pp=new THREE.Vector3().crossVectors(d,new THREE.Vector3(0,0,1));
       if(pp.length()<0.1)pp=new THREE.Vector3().crossVectors(d,new THREE.Vector3(0,1,0));
       pp.normalize(); var tl=1.0;
-      function tick(p){g.add(tube([p[0]-pp.x*tl,p[1]-pp.y*tl,p[2]-pp.z*tl],[p[0]+pp.x*tl,p[1]+pp.y*tl,p[2]+pp.z*tl],r,c));}
+      function tick(p){g.add(top(tube([p[0]-pp.x*tl,p[1]-pp.y*tl,p[2]-pp.z*tl],[p[0]+pp.x*tl,p[1]+pp.y*tl,p[2]+pp.z*tl],r,c)));}
       tick(p1);tick(p2);
-      var lb=makeDimLabel(txt,null,null,false,c);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
+      var lb=makeDimLabel(txt,null,null,!!onTop,c);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
     // petite cote (marges de découpe) : trait fin, petit label
     function smallDim(p1,p2,txt,lp,c){c=c||olv;var rr=0.12;
       g.add(tube(p1,p2,rr,c));
@@ -580,7 +587,9 @@ html, body{ height:100%; margin:0; }
       var sc=(L-2*T)/L, W=L-2*T, cnwN=Math.min(nwv,L), cnw=cnwN*sc, cnh=Math.min(nhv,P-0.2),
           sgn=(yc<0)?-1:1, yL=yc-sgn*4, zb=-P/2, hw=W/2;   // LARGEUR à l'INTÉRIEUR du cache (sous la découpe) — demandé
       var xc=notchCenter(L,nwv,nxv), xl=xc-cnw/2, xr2=xc+cnw/2;
-      // (Cote largeur de découpe retirée — redondante avec les marges G/D ; affichage épuré conforme au ss client.)
+      // Cote LARGEUR de la découpe (trait + chiffre) — À L'INTÉRIEUR du cache (dans l'ouverture), haut ET bas.
+      // Le haut est rendu « au-dessus » (sans test de profondeur) sinon le panneau supérieur le masque en vue plongeante.
+      dim([xl,yL,zb],[xr2,yL,zb],null,null,null,null,fmt(cnwN),[xc,yL+1.6,zb],olv,(sgn>0));
       // Marges G/D (petites cotes) : entre chaque bord et le début de la découpe.
       var xcN=xc/sc, mgL=(xcN-cnwN/2)+L/2, mgR=L/2-(xcN+cnwN/2);
       // Petites cotes de marge : seulement pour un petit écart (sinon long trait inutile qui encombre ; la position est déjà dans le champ « Dist. bord gauche »).
@@ -593,7 +602,21 @@ html, body{ height:100%; margin:0; }
     }
     notchDims(-H/2+T/2, state.notch, state.nw, state.nh, state.nx);
     notchDims( H/2-T/2, state.notchTop, state.nwT, state.nhT, state.nxT);
-    // Cotes « mesure utile » (or) retirées — elles se chevauchaient avec les cotes de découpe ; affichage épuré conforme au ss client.
+    // Cotes « mesure utile » (or) — uniquement en mode PROTO (la config live reste épurée).
+    if(PROTO && bracketsVisible()){
+    (function(){var gold=0x6e4e16;
+      var hp=2.5, vis=2, isDouble=(L>60), x1, x2, uw;
+      if(isDouble){ uw=L-2*hp; x1=-uw/2+vis-1.5; x2=uw/2-vis+1.5; }
+      else if(state.hinge==='D'){ uw=L-hp; x1=-(L/2-T); x2=x1+uw-vis; }
+      else {                      uw=L-hp; x2=(L/2-T);  x1=x2-uw+vis; }
+      var yC=H/2-7;
+      dim([x1,yC,fz],[x2,yC,fz],[x1,yC+1.6,fz],[x1,yC-1.6,fz],[x2,yC+1.6,fz],[x2,yC-1.6,fz],fmt(uw),[(x1+x2)/2,yC-2.7,fz-3],gold);})();
+    (function(){var gold=0x6e4e16;
+      var ixb=L/2-T-2.4+1, zEq=-P/2+0.4, visH=1.5;
+      var uh=(H-2*T)-3;
+      var ybas=-(H/2)+T, yhaut=(H/2-3)-visH;
+      dim([ixb,ybas,zEq],[ixb,yhaut,zEq],[ixb-1.6,ybas,zEq],[ixb+1.6,ybas,zEq],[ixb-1.6,yhaut,zEq],[ixb+1.6,yhaut,zEq],fmt(uh),[ixb-5,(ybas+yhaut)/2,zEq],gold);})();
+    }
     // --- cotes des DÉCOUPES LATÉRALES (sur la face du côté) ---
     function sideDims(sign, cfg){
       var cut = sideCutGeom(cfg, H, P);
@@ -943,8 +966,8 @@ html, body{ height:100%; margin:0; }
   }
 
   // ---- contrôles caméra maison (sans OrbitControls) ----
-  var dragging=false, lastX=0, lastY=0, auto=true;
-  function onDown(e){ dragging=true; auto=false; var p=pt(e); lastX=p.x; lastY=p.y; }
+  var dragging=false, lastX=0, lastY=0, auto=true, orientTarget=null;
+  function onDown(e){ dragging=true; auto=false; orientTarget=null; var p=pt(e); lastX=p.x; lastY=p.y; }
   function onMove(e){
     if(!dragging) return;
     var p=pt(e);
@@ -1021,7 +1044,7 @@ html, body{ height:100%; margin:0; }
   window.addEventListener("resize", resize);
 
   // ---- animation cinématique + rotation auto ----
-  var INTRO_DURATION = 5.5; // secondes
+  var INTRO_DURATION = 2.75; // secondes (2× plus rapide)
   var introStartTime = null;
   var introDone = false;
 
@@ -1101,6 +1124,11 @@ html, body{ height:100%; margin:0; }
         setDoorAngle(state.open);
         applyFit();
       }
+    }
+    else if(orientTarget && !dragging){   // glisse vers la découpe cochée
+      model.rotation.x += (orientTarget.x - model.rotation.x)*0.12;
+      model.rotation.y += (orientTarget.y - model.rotation.y)*0.12;
+      if(Math.abs(orientTarget.x-model.rotation.x)<0.004 && Math.abs(orientTarget.y-model.rotation.y)<0.004) orientTarget=null;
     }
 
     renderer.render(scene, camera);
@@ -1240,6 +1268,11 @@ html, body{ height:100%; margin:0; }
       var sD=doc.getElementById('cbSens'); hinge = sD? sD.value : undefined;
     }
     if(hinge==='G'||hinge==='D') state.hinge=hinge;
+    // Orientation vers la découpe qu'on vient de cocher (reste de face, s'incline vers l'élément).
+    if(src && src.focus && introDone && !dragging){
+      var _F={haut:{x:0.52,y:-0.35}, bas:{x:-0.5,y:-0.35}, gauche:{x:-0.1,y:0.62}, droite:{x:-0.1,y:-0.95}, front:{x:-0.18,y:-0.3}};
+      orientTarget=_F[src.focus]||null;
+    }
     if(!(L>0&&H>0&&P>0)){        // pas encore de dimensions : on reflète quand même le SENS de la porte sur l'aperçu par défaut
       var kH='nodim|'+state.hinge;
       if(kH!==cbLastKey){ cbLastKey=kH; build(); syncReadout(); }
