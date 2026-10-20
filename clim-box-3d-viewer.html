@@ -549,15 +549,16 @@ html, body{ height:100%; margin:0; }
   function addDimensions(parent,L,H,P){var g=new THREE.Object3D(),col=0x141414,olv=0x6c7a00,off=4,fz=P/2,r=0.22,re=0.1;
     function fmt(v){return (Math.round(v*10)/10)+' cm';}
     function V(p){return new THREE.Vector3(p[0],p[1],p[2]);}
-    function dim(p1,p2,e1a,e1b,e2a,e2b,txt,lp,c){c=c||col;
-      g.add(tube(p1,p2,r,c));
+    function dim(p1,p2,e1a,e1b,e2a,e2b,txt,lp,c,onTop){c=c||col;
+      function top(m){ if(onTop&&m&&m.material){m.material.depthTest=false;m.renderOrder=33;} return m; }
+      g.add(top(tube(p1,p2,r,c)));
       var d=new THREE.Vector3().subVectors(V(p2),V(p1)).normalize();
       var pp=new THREE.Vector3().crossVectors(d,new THREE.Vector3(0,0,1));
       if(pp.length()<0.1)pp=new THREE.Vector3().crossVectors(d,new THREE.Vector3(0,1,0));
       pp.normalize(); var tl=1.0;
-      function tick(p){g.add(tube([p[0]-pp.x*tl,p[1]-pp.y*tl,p[2]-pp.z*tl],[p[0]+pp.x*tl,p[1]+pp.y*tl,p[2]+pp.z*tl],r,c));}
+      function tick(p){g.add(top(tube([p[0]-pp.x*tl,p[1]-pp.y*tl,p[2]-pp.z*tl],[p[0]+pp.x*tl,p[1]+pp.y*tl,p[2]+pp.z*tl],r,c)));}
       tick(p1);tick(p2);
-      var lb=makeDimLabel(txt,null,null,false,c);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
+      var lb=makeDimLabel(txt,null,null,!!onTop,c);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
     // petite cote (marges de découpe) : trait fin, petit label
     function smallDim(p1,p2,txt,lp,c){c=c||olv;var rr=0.12;
       g.add(tube(p1,p2,rr,c));
@@ -586,10 +587,9 @@ html, body{ height:100%; margin:0; }
       var sc=(L-2*T)/L, W=L-2*T, cnwN=Math.min(nwv,L), cnw=cnwN*sc, cnh=Math.min(nhv,P-0.2),
           sgn=(yc<0)?-1:1, yL=yc-sgn*4, zb=-P/2, hw=W/2;   // LARGEUR à l'INTÉRIEUR du cache (sous la découpe) — demandé
       var xc=notchCenter(L,nwv,nxv), xl=xc-cnw/2, xr2=xc+cnw/2;
-      // Cote LARGEUR de la découpe (trait + chiffre) — côté VISIBLE : haut = au-dessus du panneau (sinon occulté), bas = dans l'ouverture.
-      var yWd = (sgn>0) ? (H/2+6) : yL;
-      var yWl = (sgn>0) ? (H/2+7.7) : (yL-sgn*1.6);
-      dim([xl,yWd,zb],[xr2,yWd,zb],null,null,null,null,fmt(cnwN),[xc,yWl,zb],olv);
+      // Cote LARGEUR de la découpe (trait + chiffre) — À L'INTÉRIEUR du cache (dans l'ouverture), haut ET bas.
+      // Le haut est rendu « au-dessus » (sans test de profondeur) sinon le panneau supérieur le masque en vue plongeante.
+      dim([xl,yL,zb],[xr2,yL,zb],null,null,null,null,fmt(cnwN),[xc,yL+1.6,zb],olv,(sgn>0));
       // Marges G/D (petites cotes) : entre chaque bord et le début de la découpe.
       var xcN=xc/sc, mgL=(xcN-cnwN/2)+L/2, mgR=L/2-(xcN+cnwN/2);
       // Petites cotes de marge : seulement pour un petit écart (sinon long trait inutile qui encombre ; la position est déjà dans le champ « Dist. bord gauche »).
