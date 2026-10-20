@@ -283,25 +283,30 @@ img{max-width:100%}
   var th=null;$('#themeBtn').onclick=function(){var c=document.documentElement.getAttribute('data-theme');
     th=(c==='dark')?'light':(c==='light'?null:'dark');if(th)document.documentElement.setAttribute('data-theme',th);else document.documentElement.removeAttribute('data-theme');};
 
-  /* ---- feuille glissante ---- */
-  var sheet=$('#sheet'),handle=$('#handle');
-  var PEEK=.40,OPEN=.82;
-  function vh(f){return Math.round(innerHeight*f);}
+  /* ---- feuille glissante : position LIBRE, le 3D s'adapte en continu ---- */
+  var sheet=$('#sheet'),handle=$('#handle'),curPx=0,raf=0;
+  var MIN3D=110;                                  // on garde toujours au moins ce 3D visible
+  function footerH(){return ($('#bar').offsetHeight||76);}
+  function clampPx(px){var maxPx=innerHeight-footerH()-MIN3D, minPx=Math.round(innerHeight*0.14);return Math.max(minPx,Math.min(maxPx,px));}
   function layout(){
-    document.documentElement.style.setProperty('--footerH',($('#bar').offsetHeight||76)+'px');
-    var occupied=sheet.offsetHeight+($('#bar').offsetHeight||76);
-    $('#stage').style.height=Math.max(150,innerHeight-occupied)+'px';
+    document.documentElement.style.setProperty('--footerH',footerH()+'px');
+    $('#stage').style.height=Math.max(MIN3D,innerHeight-sheet.offsetHeight-footerH())+'px';
   }
-  var openState=false;
-  function setSheet(open){openState=open;sheet.classList.remove('dragging');sheet.style.height=vh(open?OPEN:PEEK)+'px';requestAnimationFrame(layout);}
-  var dr=false,sy=0,sh0=0;
-  handle.addEventListener('pointerdown',function(e){dr=true;sy=e.clientY;sh0=sheet.offsetHeight;sheet.classList.add('dragging');try{handle.setPointerCapture(e.pointerId)}catch(_){}} );
-  handle.addEventListener('pointermove',function(e){if(!dr)return;var nh=Math.max(vh(.16),Math.min(vh(.86),sh0+(sy-e.clientY)));sheet.style.height=nh+'px';layout();});
-  handle.addEventListener('pointerup',function(e){if(!dr)return;dr=false;try{handle.releasePointerCapture(e.pointerId)}catch(_){}var mid=(vh(PEEK)+vh(OPEN))/2;setSheet(sheet.offsetHeight>mid);});
-  handle.addEventListener('click',function(){setSheet(!openState);});
-  window.addEventListener('resize',function(){setSheet(openState);});
+  function setH(px,anim){ if(!anim)sheet.classList.add('dragging'); curPx=clampPx(px); sheet.style.height=curPx+'px';
+    if(anim){sheet.classList.remove('dragging');} layout(); }
+  var dr=false,sy=0,h0=0,moved=false;
+  handle.addEventListener('pointerdown',function(e){dr=true;moved=false;sy=e.clientY;h0=sheet.offsetHeight;sheet.classList.add('dragging');try{handle.setPointerCapture(e.pointerId)}catch(_){}} );
+  handle.addEventListener('pointermove',function(e){if(!dr)return;if(Math.abs(e.clientY-sy)>3)moved=true;
+    curPx=clampPx(h0+(sy-e.clientY));
+    if(!raf)raf=requestAnimationFrame(function(){raf=0;sheet.style.height=curPx+'px';layout();});});
+  handle.addEventListener('pointerup',function(e){if(!dr)return;dr=false;try{handle.releasePointerCapture(e.pointerId)}catch(_){}
+    sheet.classList.remove('dragging');
+    if(!moved){ var big=innerHeight*0.55;                    // simple tap = bascule grand / petit
+      setH(sheet.offsetHeight<big ? innerHeight-footerH()-MIN3D : Math.round(innerHeight*0.30), true); }
+    /* si on a glissé : on garde exactement la position choisie (pas de snap) */ });
+  window.addEventListener('resize',function(){setH(curPx||Math.round(innerHeight*0.40),true);});
 
-  setSheet(false);sync();requestAnimationFrame(layout);
+  setH(Math.round(innerHeight*0.40),true); sync(); requestAnimationFrame(layout);
 })();
 </script>
 </body>
