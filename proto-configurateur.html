@@ -145,7 +145,7 @@ img{max-width:100%}
 
 <div id="stage">
   <iframe id="viewer" title="Aperçu 3D du cache"></iframe>
-  <script>document.getElementById('viewer').src='clim-box-3d-viewer.html?proto=1&v='+Math.floor(Date.now()/60000);</script>
+  <script>(function(){var m=/[?&]viewer=([^&]+)/.exec(location.search);var vf=m?decodeURIComponent(m[1]):'clim-box-3d-viewer.html';if(!/^clim-box-3d-viewer[a-z0-9-]*\.html$/.test(vf))vf='clim-box-3d-viewer.html';document.getElementById('viewer').src=vf+'?proto=1&v='+Math.floor(Date.now()/60000);})();</script>
 </div>
 
 <header class="top">
