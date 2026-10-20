@@ -265,11 +265,11 @@ img{max-width:100%}
   var frame=$('#viewer');
 
   /* ---- pont vers le VRAI viewer 3D ---- */
-  function push(){
+  function push(focus){
     var w=frame.contentWindow; if(!w) return;
     var nxT=Math.max(0,Math.round((state.L-state.NWt)/2));
     var nxB=Math.max(0,Math.round((state.L-state.NWb)/2));
-    w.postMessage({cbType:'cb-dims', L:state.L, H:state.H, P:state.P, hinge:state.hinge,
+    w.postMessage({cbType:'cb-dims', focus:focus||null, L:state.L, H:state.H, P:state.P, hinge:state.hinge,
       decH:state.dHaut, nwT:state.NWt, nhT:state.NDt, nxT:nxT,
       decB:state.dBas,  nw:state.NWb,  nh:state.NDb,  nxB:nxB,
       decCG:state.dSG, slH:state.SHg, slP:state.SPg, slY:null, slCT:state.cutTG, slCB:state.cutBG, slCtr:true,
@@ -298,7 +298,7 @@ img{max-width:100%}
     if(state.H>0&&state.L>0&&state.P>0){ el.hidden=false;
       el.innerHTML='Dimensions extérieures : <b>H '+fnum(state.H+3.6)+' · L '+fnum(state.L+3.6)+' · P '+fnum(state.P+1.8)+' cm</b>'; }
     else el.hidden=true; }   /* les dimensions utiles sont affichées sur le 3D (cotes dorées) */
-  function sync(){ refreshPrice(); refreshExt(); showErr(); push(); }
+  function sync(focus){ refreshPrice(); refreshExt(); showErr(); push(focus); }
 
   /* ---- steppers ----
      dimensions principales : 3D en direct ; dimensions de découpe : 3D mis à jour au blur
@@ -316,14 +316,14 @@ img{max-width:100%}
     state.hinge=b.getAttribute('data-s');document.querySelectorAll('#sens button').forEach(function(x){x.classList.remove('on')});b.classList.add('on');sync();};});
 
   $('#advToggle').onclick=function(){$('#adv').classList.toggle('open');requestAnimationFrame(layout);};
-  function tog(id,key,sub){var b=document.getElementById(id);b.onclick=function(){state[key]=!state[key];b.classList.toggle('on',state[key]);if(sub){document.getElementById(sub).hidden=!state[key];requestAnimationFrame(layout);}sync();};}
-  tog('dHaut','dHaut','subHaut'); tog('dBas','dBas','subBas'); tog('dSG','dSG','subSG'); tog('dSD','dSD','subSD');
-  function togCut(id,key,cellId,ctKey,cbKey){var b=document.getElementById(id);b.onclick=function(){
+  function tog(id,key,sub,focus){var b=document.getElementById(id);b.onclick=function(){state[key]=!state[key];b.classList.toggle('on',state[key]);if(sub){document.getElementById(sub).hidden=!state[key];requestAnimationFrame(layout);}sync(focus?(state[key]?focus:'front'):undefined);};}
+  tog('dHaut','dHaut','subHaut','haut'); tog('dBas','dBas','subBas','bas'); tog('dSG','dSG','subSG','gauche'); tog('dSD','dSD','subSD','droite');
+  function togCut(id,key,cellId,ctKey,cbKey,focus){var b=document.getElementById(id);b.onclick=function(){
     state[key]=!state[key];b.classList.toggle('on',state[key]);
     var c=document.getElementById(cellId);if(c)c.style.display=(state[ctKey]&&state[cbKey])?'none':'';   // hauteur inutile si haut ET bas coupés
-    requestAnimationFrame(layout);sync();};}
-  togCut('cutTG','cutTG','cellSHg','cutTG','cutBG'); togCut('cutBG','cutBG','cellSHg','cutTG','cutBG');
-  togCut('cutTD','cutTD','cellSHd','cutTD','cutBD'); togCut('cutBD','cutBD','cellSHd','cutTD','cutBD');
+    requestAnimationFrame(layout);sync(focus);};}
+  togCut('cutTG','cutTG','cellSHg','cutTG','cutBG','gauche'); togCut('cutBG','cutBG','cellSHg','cutTG','cutBG','gauche');
+  togCut('cutTD','cutTD','cellSHd','cutTD','cutBD','droite'); togCut('cutBD','cutBD','cellSHd','cutTD','cutBD','droite');
   tog('lock','lock');   // serrure (option de prix ; n'affecte pas le 3D)
 
   /* ---- vraie date de fabrication (lot) depuis config.json ---- */

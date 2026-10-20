@@ -963,8 +963,8 @@ html, body{ height:100%; margin:0; }
   }
 
   // ---- contrôles caméra maison (sans OrbitControls) ----
-  var dragging=false, lastX=0, lastY=0, auto=true;
-  function onDown(e){ dragging=true; auto=false; var p=pt(e); lastX=p.x; lastY=p.y; }
+  var dragging=false, lastX=0, lastY=0, auto=true, orientTarget=null;
+  function onDown(e){ dragging=true; auto=false; orientTarget=null; var p=pt(e); lastX=p.x; lastY=p.y; }
   function onMove(e){
     if(!dragging) return;
     var p=pt(e);
@@ -1122,6 +1122,11 @@ html, body{ height:100%; margin:0; }
         applyFit();
       }
     }
+    else if(orientTarget && !dragging){   // glisse vers la découpe cochée
+      model.rotation.x += (orientTarget.x - model.rotation.x)*0.12;
+      model.rotation.y += (orientTarget.y - model.rotation.y)*0.12;
+      if(Math.abs(orientTarget.x-model.rotation.x)<0.004 && Math.abs(orientTarget.y-model.rotation.y)<0.004) orientTarget=null;
+    }
 
     renderer.render(scene, camera);
   }
@@ -1260,6 +1265,11 @@ html, body{ height:100%; margin:0; }
       var sD=doc.getElementById('cbSens'); hinge = sD? sD.value : undefined;
     }
     if(hinge==='G'||hinge==='D') state.hinge=hinge;
+    // Orientation vers la découpe qu'on vient de cocher (reste de face, s'incline vers l'élément).
+    if(src && src.focus && introDone && !dragging){
+      var _F={haut:{x:0.52,y:-0.35}, bas:{x:-0.5,y:-0.35}, gauche:{x:-0.1,y:0.62}, droite:{x:-0.1,y:-0.95}, front:{x:-0.18,y:-0.3}};
+      orientTarget=_F[src.focus]||null;
+    }
     if(!(L>0&&H>0&&P>0)){        // pas encore de dimensions : on reflète quand même le SENS de la porte sur l'aperçu par défaut
       var kH='nodim|'+state.hinge;
       if(kH!==cbLastKey){ cbLastKey=kH; build(); syncReadout(); }
