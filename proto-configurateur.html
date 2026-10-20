@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Clim-Box · Prototype configurateur</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --bg1:#F6F5F0; --bg2:#E9E7DD; --panel:#FFFFFF; --panel2:#FAF9F4;
+  --ink:#1C1C16; --muted:#71715f; --line:#E7E5DB;
+  --accent:#6F7F0D; --accent-bright:#A3BA1A; --accent-soft:rgba(163,186,26,.14);
+  --err:#D9544E; --shadow:0 -8px 30px rgba(28,28,22,.10);
+  --font:'Inter',system-ui,Arial,sans-serif; color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --bg1:#14150F; --bg2:#0C0D08; --panel:#1B1C17; --panel2:#201F19;
+  --ink:#F1F0E8; --muted:#A4A394; --line:#2B2C25;
+  --accent:#9FB22A; --accent-bright:#B7CC2E; --accent-soft:rgba(163,186,26,.16);
+  --shadow:0 -8px 30px rgba(0,0,0,.45); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg1:#14150F; --bg2:#0C0D08; --panel:#1B1C17; --panel2:#201F19;
+  --ink:#F1F0E8; --muted:#A4A394; --line:#2B2C25;
+  --accent:#9FB22A; --accent-bright:#B7CC2E; --accent-soft:rgba(163,186,26,.16);
+  --shadow:0 -8px 30px rgba(0,0,0,.45); color-scheme:dark;
+}
+html,body{height:100%;margin:0}
+body{font-family:var(--font);color:var(--ink);background:var(--bg2);overflow:hidden;-webkit-text-size-adjust:100%}
+*{box-sizing:border-box}
+button{font-family:inherit;color:inherit;cursor:pointer}
+img{max-width:100%}
+
+#stage{position:fixed;top:0;left:0;right:0;height:52vh;z-index:0;
+  background:radial-gradient(120% 90% at 50% 20%, var(--bg1), var(--bg2));}
+#viewer{width:100%;height:100%;border:0;display:block;background:transparent}
+
+.top{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);z-index:30;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;pointer-events:none}
+.brand{display:flex;align-items:center;gap:8px;font-weight:800;letter-spacing:-.2px;font-size:16px;pointer-events:auto}
+.brand .dot{width:22px;height:22px;border-radius:7px;background:var(--accent-bright);display:grid;place-items:center;color:#14150F;font-size:13px}
+.top .tools{display:flex;gap:8px;pointer-events:auto}
+.iconbtn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--panel);display:grid;place-items:center;font-size:16px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.chip-ar{pointer-events:auto;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:9px 14px;font-weight:600;font-size:13px;display:flex;align-items:center;gap:7px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+
+#sheet{position:fixed;left:0;right:0;bottom:calc(var(--footerH,76px) + env(safe-area-inset-bottom,0px));z-index:20;
+  height:var(--sheetH,40vh);background:var(--panel);border-radius:22px 22px 0 0;box-shadow:var(--shadow);
+  display:flex;flex-direction:column;transition:height .28s cubic-bezier(.22,.61,.36,1);overflow:hidden}
+#sheet.dragging{transition:none}
+.handlewrap{padding:9px 0 4px;display:flex;justify-content:center;flex:0 0 auto;cursor:grab;touch-action:none}
+.handle{width:40px;height:5px;border-radius:999px;background:var(--line)}
+.sheet-scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:4px 16px 18px}
+.sheet-scroll::-webkit-scrollbar{width:0}
+
+.block{padding:14px 0;border-top:1px solid var(--line)}
+.block:first-of-type{border-top:0}
+.block h3{margin:0 0 12px;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.hint{margin:8px 0 0;font-size:12.5px;line-height:1.45;color:var(--muted)}
+.hint b{color:var(--ink);font-weight:600}
+
+.dimrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.dimcell .lab{font-size:12.5px;font-weight:600;text-align:center;margin-bottom:6px}
+.dimcell .lab small{display:block;color:var(--muted);font-weight:400;font-size:10px}
+.cstep{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:12px;background:var(--panel2);overflow:hidden}
+.cstep.err{border-color:var(--err);background:rgba(217,84,78,.08)}
+.cstep button{width:30px;height:46px;border:0;background:transparent;font-size:21px;line-height:1;color:var(--accent);flex:0 0 auto}
+.cstep button:active{background:var(--accent-soft)}
+.cstep input{width:100%;min-width:0;border:0;background:transparent;text-align:center;font-size:18px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;padding:0}
+.cstep input:focus{outline:none}
+.errmsg{color:var(--err);font-size:11px;text-align:center;margin-top:5px;min-height:0}
+.linklike{background:none;border:0;color:var(--accent);font-weight:600;font-size:13px;padding:12px 0 2px;text-decoration:underline;text-underline-offset:3px}
+
+.seg{display:flex;gap:8px}
+.seg button{flex:1;border:1.5px solid var(--line);background:var(--panel2);border-radius:13px;padding:11px 8px;text-align:center;transition:border-color .12s,background .12s}
+.seg button.on{border-color:var(--accent-bright);background:var(--accent-soft)}
+.seg button b{display:block;font-size:13px;font-weight:700}
+.seg button span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+
+.adv-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;border:0;background:none;padding:14px 0;border-top:1px solid var(--line);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.adv-toggle .arr{transition:transform .2s}
+.adv.open .adv-toggle .arr{transform:rotate(180deg)}
+.adv-body{display:none}
+.adv.open .adv-body{display:block;padding-bottom:4px}
+.adv-sub{margin:4px 0 14px}
+.adv-sub>label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:8px}
+.opt{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.opt .txt b{font-size:13.5px}
+.opt .txt span{display:block;font-size:11.5px;color:var(--muted);margin-top:1px}
+.sw-toggle{width:50px;height:30px;border-radius:999px;background:var(--line);border:0;position:relative;transition:background .15s;flex:0 0 auto}
+.sw-toggle::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.sw-toggle.on{background:var(--accent-bright)}.sw-toggle.on::after{left:23px}
+.subdims{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 0 12px}
+.subdims .dimcell .lab{text-align:left;font-size:11.5px}
+
+#bar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--panel);border-top:1px solid var(--line);
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.06)}
+#bar .price{flex:0 0 auto}
+#bar .price .lbl{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+#bar .price .val{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.05}
+#bar .cta{flex:1;border:0;border-radius:14px;background:var(--accent-bright);color:#16170F;font-weight:800;font-size:16px;padding:15px 16px;box-shadow:0 4px 14px rgba(163,186,26,.4)}
+#bar .cta:active{transform:translateY(1px)}
+
+.overlay{position:fixed;inset:0;z-index:60;background:rgba(12,12,8,.55);display:none;align-items:flex-end}
+.overlay.show{display:flex}
+.modal{background:var(--panel);width:100%;border-radius:22px 22px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));max-height:88vh;overflow-y:auto}
+.modal h2{margin:0 0 4px;font-size:18px}
+.modal p{font-size:13.5px;line-height:1.5;color:var(--muted);margin:8px 0}
+.guide-svg{width:100%;height:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel2);margin:10px 0}
+.modal .done{width:100%;margin-top:12px;border:0;border-radius:13px;background:var(--accent-bright);color:#16170F;font-weight:700;padding:13px;font-size:15px}
+
+#toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(14px);z-index:70;background:var(--ink);color:var(--bg1);padding:11px 16px;border-radius:999px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <iframe id="viewer" title="Aperçu 3D du cache" src="clim-box-3d-viewer.html"></iframe>
+</div>
+
+<header class="top">
+  <div class="brand"><span class="dot">◳</span> Clim-Box</div>
+  <div class="tools">
+    <button class="chip-ar" id="arBtn">▦ Voir chez moi</button>
+    <button class="iconbtn" id="themeBtn" aria-label="Thème">◐</button>
+  </div>
+</header>
+
+<section id="sheet" aria-label="Options du cache">
+  <div class="handlewrap" id="handle"><div class="handle"></div></div>
+  <div class="sheet-scroll" id="scroll">
+
+    <div class="block">
+      <h3>Dimensions intérieures (cm)</h3>
+      <div class="dimrow">
+        <div class="dimcell"><div class="lab">Hauteur<small>porte</small></div>
+          <div class="cstep" data-k="H"><button data-d="-1">−</button><input id="inH" inputmode="decimal" value="60"><button data-d="1">+</button></div></div>
+        <div class="dimcell"><div class="lab">Largeur<small>porte</small></div>
+          <div class="cstep" data-k="L"><button data-d="-1">−</button><input id="inL" inputmode="decimal" value="35"><button data-d="1">+</button></div></div>
+        <div class="dimcell"><div class="lab">Profondeur<small>cache</small></div>
+          <div class="cstep" data-k="P"><button data-d="-1">−</button><input id="inP" inputmode="decimal" value="15"><button data-d="1">+</button></div></div>
+      </div>
+      <div class="errmsg" id="errMsg"></div>
+      <button class="linklike" id="helpBtn">Comment mesurer mon tableau ?</button>
+      <p class="hint">De planche à planche (l'ouverture intérieure). Prévoyez ~3 cm de marge autour de votre tableau.</p>
+    </div>
+
+    <div class="adv open" id="adv">
+      <button class="adv-toggle" id="advToggle">Options avancées <span class="arr">▾</span></button>
+      <div class="adv-body">
+
+        <div class="adv-sub">
+          <label>Sens d'ouverture (charnière)</label>
+          <div class="seg" id="sens">
+            <button data-s="G" class="on"><b>À gauche</b><span>s'ouvre à droite</span></button>
+            <button data-s="D"><b>À droite</b><span>s'ouvre à gauche</span></button>
+          </div>
+        </div>
+
+        <div class="opt"><div class="txt"><b>Découpe haute</b><span>passe-câble en haut</span></div><button class="sw-toggle" id="dHaut"></button></div>
+        <div class="subdims" id="subHaut" hidden>
+          <div class="dimcell"><div class="lab">Largeur</div><div class="cstep" data-k="NWt"><button data-d="-1">−</button><input id="inNWt" inputmode="decimal" value="12"><button data-d="1">+</button></div></div>
+          <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="NDt"><button data-d="-1">−</button><input id="inNDt" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
+        </div>
+
+        <div class="opt"><div class="txt"><b>Découpe basse</b><span>passe-câble en bas</span></div><button class="sw-toggle" id="dBas"></button></div>
+        <div class="subdims" id="subBas" hidden>
+          <div class="dimcell"><div class="lab">Largeur</div><div class="cstep" data-k="NWb"><button data-d="-1">−</button><input id="inNWb" inputmode="decimal" value="12"><button data-d="1">+</button></div></div>
+          <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="NDb"><button data-d="-1">−</button><input id="inNDb" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
+        </div>
+
+        <div class="opt"><div class="txt"><b>Découpe côté gauche</b><span>sur le flanc</span></div><button class="sw-toggle" id="dSG"></button></div>
+        <div class="subdims" id="subSG" hidden>
+          <div class="dimcell"><div class="lab">Hauteur</div><div class="cstep" data-k="SHg"><button data-d="-1">−</button><input id="inSHg" inputmode="decimal" value="10"><button data-d="1">+</button></div></div>
+          <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="SPg"><button data-d="-1">−</button><input id="inSPg" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
+        </div>
+
+        <div class="opt"><div class="txt"><b>Découpe côté droit</b><span>sur le flanc</span></div><button class="sw-toggle" id="dSD"></button></div>
+        <div class="subdims" id="subSD" hidden>
+          <div class="dimcell"><div class="lab">Hauteur</div><div class="cstep" data-k="SHd"><button data-d="-1">−</button><input id="inSHd" inputmode="decimal" value="10"><button data-d="1">+</button></div></div>
+          <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="SPd"><button data-d="-1">−</button><input id="inSPd" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
+        </div>
+
+      </div>
+    </div>
+
+    <p class="hint" style="padding:12px 0 4px;border-top:1px solid var(--line)">Fabrication sur mesure, expédié sous 2 à 3 semaines. Le sens d'ouverture reste modifiable au montage.</p>
+  </div>
+</section>
+
+<div id="bar">
+  <div class="price"><div class="lbl">Votre prix</div><div class="val" id="priceVal">117,95 €</div></div>
+  <button class="cta" id="cta">Ajouter au panier</button>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2>Comment mesurer</h2>
+    <p>Mesurez l'<b>ouverture intérieure</b> souhaitée, de planche à planche. Prévoyez environ <b>3 cm de marge</b> autour de votre tableau électrique.</p>
+    <svg class="guide-svg" viewBox="0 0 320 180" role="img" aria-label="Schéma de mesure">
+      <rect x="70" y="30" width="180" height="120" rx="4" fill="none" stroke="var(--accent)" stroke-width="2"/>
+      <rect x="92" y="52" width="136" height="76" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <line x1="70" y1="166" x2="250" y2="166" stroke="var(--ink)" stroke-width="1.5"/>
+      <text x="160" y="178" text-anchor="middle" font-size="11" fill="var(--ink)" font-family="Inter">Largeur</text>
+      <line x1="54" y1="30" x2="54" y2="150" stroke="var(--ink)" stroke-width="1.5"/>
+      <text x="40" y="94" text-anchor="middle" font-size="11" fill="var(--ink)" font-family="Inter" transform="rotate(-90 40 94)">Hauteur</text>
+    </svg>
+    <button class="done" id="guideDone">J'ai compris</button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var $=function(s){return document.querySelector(s)};
+  var MIN={H:20,L:15,P:7,NWt:4,NDt:2,NWb:4,NDb:2,SHg:4,SPg:2,SHd:4,SPd:2};
+  var MAX={H:140,L:120,P:40};
+  var state={H:60,L:35,P:15,hinge:'G',
+    dHaut:false,NWt:12,NDt:4, dBas:false,NWb:12,NDb:4, dSG:false,SHg:10,SPg:4, dSD:false,SHd:10,SPd:4};
+  var touched={};
+  var frame=$('#viewer');
+
+  /* ---- pont vers le VRAI viewer 3D ---- */
+  function push(){
+    var w=frame.contentWindow; if(!w) return;
+    var nxT=Math.max(0,Math.round((state.L-state.NWt)/2));
+    var nxB=Math.max(0,Math.round((state.L-state.NWb)/2));
+    w.postMessage({cbType:'cb-dims', L:state.L, H:state.H, P:state.P, hinge:state.hinge,
+      decH:state.dHaut, nwT:state.NWt, nhT:state.NDt, nxT:nxT,
+      decB:state.dBas,  nw:state.NWb,  nh:state.NDb,  nxB:nxB,
+      decCG:state.dSG, slH:state.SHg, slP:state.SPg, slY:null, slCT:false, slCB:false, slCtr:true,
+      decCD:state.dSD, srH:state.SHd, srP:state.SPd, srY:null, srCT:false, srCB:false, srCtr:true
+    },'*');
+  }
+  // le viewer peut mettre un court instant à écouter / finir son intro → on pousse plusieurs fois
+  frame.addEventListener('load',function(){ [60,300,700,1300,2200].forEach(function(t){setTimeout(push,t);}); });
+  [400,1000,2000,3200].forEach(function(t){setTimeout(push,t);});
+
+  /* ---- prix / validation ---- */
+  var euro=function(n){return n.toFixed(2).replace('.',',')+' €'};
+  function nDec(){return (state.dHaut?1:0)+(state.dBas?1:0)+(state.dSG?1:0)+(state.dSD?1:0);}
+  function price(){var s=state.H+state.L+state.P,base=117.95;var supp=s>130?Math.ceil(s-130)*1.9:0;return base+supp+nDec()*5;}
+  function clamp(k,v){v=Math.round(v);if(MAX[k])v=Math.min(v,MAX[k]);v=Math.max(v,MIN[k]||0);return v;}
+  function dimErr(k){if(k!=='H'&&k!=='L'&&k!=='P')return false;var v=state[k];return v>0&&(v<MIN[k]||v>MAX[k]);}
+  function showErr(){
+    var msgs=[];['H','L','P'].forEach(function(k){var id={H:'inH',L:'inL',P:'inP'}[k];
+      var bad=dimErr(k)&&!!touched[k];document.getElementById(id).parentNode.classList.toggle('err',bad);
+      if(bad)msgs.push({H:'Hauteur',L:'Largeur',P:'Profondeur'}[k]+' : '+MIN[k]+'–'+MAX[k]+' cm');});
+    $('#errMsg').textContent=msgs[0]||'';
+  }
+  function sync(){ $('#priceVal').textContent=euro(price()); showErr(); push(); }
+
+  /* ---- steppers ---- */
+  document.querySelectorAll('.cstep').forEach(function(st){
+    var k=st.getAttribute('data-k'),inp=st.querySelector('input');
+    st.querySelectorAll('button').forEach(function(btn){btn.onclick=function(){
+      state[k]=clamp(k,(state[k]||0)+ +btn.getAttribute('data-d'));inp.value=state[k];touched[k]=true;sync();};});
+    inp.addEventListener('input',function(){var v=parseFloat(inp.value.replace(',','.'));state[k]=isNaN(v)?0:v;sync();});
+    inp.addEventListener('focus',function(){touched[k]=false;showErr();});
+    inp.addEventListener('blur',function(){touched[k]=true;if(state[k]>0)state[k]=clamp(k,state[k]);inp.value=state[k]||'';showErr();});
+  });
+
+  document.querySelectorAll('#sens button').forEach(function(b){b.onclick=function(){
+    state.hinge=b.getAttribute('data-s');document.querySelectorAll('#sens button').forEach(function(x){x.classList.remove('on')});b.classList.add('on');sync();};});
+
+  $('#advToggle').onclick=function(){$('#adv').classList.toggle('open');requestAnimationFrame(layout);};
+  function tog(id,key,sub){var b=document.getElementById(id);b.onclick=function(){state[key]=!state[key];b.classList.toggle('on',state[key]);if(sub){document.getElementById(sub).hidden=!state[key];requestAnimationFrame(layout);}sync();};}
+  tog('dHaut','dHaut','subHaut'); tog('dBas','dBas','subBas'); tog('dSG','dSG','subSG'); tog('dSD','dSD','subSD');
+
+  $('#helpBtn').onclick=function(){$('#overlay').classList.add('show');};
+  $('#overlay').onclick=function(e){if(e.target===$('#overlay'))$('#overlay').classList.remove('show');};
+  $('#guideDone').onclick=function(){$('#overlay').classList.remove('show');};
+  var toastT;function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show')},2300);}
+  $('#arBtn').onclick=function(){toast('Aperçu en réalité augmentée — bientôt disponible');};
+  $('#cta').onclick=function(){touched.H=touched.L=touched.P=true;showErr();
+    if(dimErr('H')||dimErr('L')||dimErr('P')){toast('Vérifiez les dimensions');$('#scroll').scrollTo({top:0,behavior:'smooth'});return;}
+    var d=nDec();toast('Ajouté : '+state.L+'×'+state.H+'×'+state.P+' cm'+(d?(' · '+d+' découpe'+(d>1?'s':'')):'')+' · '+euro(price()));};
+  var th=null;$('#themeBtn').onclick=function(){var c=document.documentElement.getAttribute('data-theme');
+    th=(c==='dark')?'light':(c==='light'?null:'dark');if(th)document.documentElement.setAttribute('data-theme',th);else document.documentElement.removeAttribute('data-theme');};
+
+  /* ---- feuille glissante ---- */
+  var sheet=$('#sheet'),handle=$('#handle');
+  var PEEK=.40,OPEN=.82;
+  function vh(f){return Math.round(innerHeight*f);}
+  function layout(){
+    document.documentElement.style.setProperty('--footerH',($('#bar').offsetHeight||76)+'px');
+    var occupied=sheet.offsetHeight+($('#bar').offsetHeight||76);
+    $('#stage').style.height=Math.max(150,innerHeight-occupied)+'px';
+  }
+  var openState=false;
+  function setSheet(open){openState=open;sheet.classList.remove('dragging');sheet.style.height=vh(open?OPEN:PEEK)+'px';requestAnimationFrame(layout);}
+  var dr=false,sy=0,sh0=0;
+  handle.addEventListener('pointerdown',function(e){dr=true;sy=e.clientY;sh0=sheet.offsetHeight;sheet.classList.add('dragging');try{handle.setPointerCapture(e.pointerId)}catch(_){}} );
+  handle.addEventListener('pointermove',function(e){if(!dr)return;var nh=Math.max(vh(.16),Math.min(vh(.86),sh0+(sy-e.clientY)));sheet.style.height=nh+'px';layout();});
+  handle.addEventListener('pointerup',function(e){if(!dr)return;dr=false;try{handle.releasePointerCapture(e.pointerId)}catch(_){}var mid=(vh(PEEK)+vh(OPEN))/2;setSheet(sheet.offsetHeight>mid);});
+  handle.addEventListener('click',function(){setSheet(!openState);});
+  window.addEventListener('resize',function(){setSheet(openState);});
+
+  setSheet(false);sync();requestAnimationFrame(layout);
+})();
+</script>
+</body>
+</html>
