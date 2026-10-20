@@ -1266,7 +1266,7 @@ html, body{ height:100%; margin:0; }
     var tD=root.querySelector('#cbx-sideR'); if(tD){tD.checked=state.sideR; var cD=root.querySelector('#cbx-sideR-ctrl'); if(cD)cD.classList.toggle('is-off',!state.sideR);}
     if(typeof setActivePreset==='function') setActivePreset('custom');
     build(); syncReadout();
-    userZoomed=false; if(introDone){ applyFit(); }   // re-cadrage auto quand les dimensions changent
+    if(introDone && !userZoomed){ applyFit(); }   // re-cadrage auto sur changement de dimension UNIQUEMENT si l'utilisateur n'a pas zoomé/dézoomé manuellement → on préserve son zoom (pincement mobile « comme avant »)
   }
   (function cbBridgeInit(){
     var doc=cbSiteDoc();
