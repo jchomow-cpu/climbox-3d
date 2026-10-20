@@ -586,7 +586,10 @@ html, body{ height:100%; margin:0; }
       var sc=(L-2*T)/L, W=L-2*T, cnwN=Math.min(nwv,L), cnw=cnwN*sc, cnh=Math.min(nhv,P-0.2),
           sgn=(yc<0)?-1:1, yL=yc-sgn*4, zb=-P/2, hw=W/2;   // LARGEUR à l'INTÉRIEUR du cache (sous la découpe) — demandé
       var xc=notchCenter(L,nwv,nxv), xl=xc-cnw/2, xr2=xc+cnw/2;
-      // (Cote largeur de découpe retirée — redondante avec les marges G/D ; affichage épuré conforme au ss client.)
+      // Cote LARGEUR de la découpe (trait + chiffre) — côté VISIBLE : haut = au-dessus du panneau (sinon occulté), bas = dans l'ouverture.
+      var yWd = (sgn>0) ? (H/2+6) : yL;
+      var yWl = (sgn>0) ? (H/2+7.7) : (yL-sgn*1.6);
+      dim([xl,yWd,zb],[xr2,yWd,zb],null,null,null,null,fmt(cnwN),[xc,yWl,zb],olv);
       // Marges G/D (petites cotes) : entre chaque bord et le début de la découpe.
       var xcN=xc/sc, mgL=(xcN-cnwN/2)+L/2, mgR=L/2-(xcN+cnwN/2);
       // Petites cotes de marge : seulement pour un petit écart (sinon long trait inutile qui encombre ; la position est déjà dans le champ « Dist. bord gauche »).
