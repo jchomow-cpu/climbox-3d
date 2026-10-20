@@ -305,6 +305,10 @@ html, body{ height:100%; margin:0; }
 #cbx-cfg .cbx-pan-down::after{border-left:4px solid transparent; border-right:4px solid transparent; border-top:5px solid currentColor}
 #cbx-cfg .cbx-pan-left::after{border-top:4px solid transparent; border-bottom:4px solid transparent; border-right:5px solid currentColor}
 #cbx-cfg .cbx-pan-right::after{border-top:4px solid transparent; border-bottom:4px solid transparent; border-left:5px solid currentColor}
+/* Mode prototype : HUD porte/cotes plus fin et collé à gauche (libère de la place) */
+.cbx-proto #cbx-cfg .cbx-bar{ left:2px !important; bottom:8px !important; padding:6px 5px !important; gap:7px !important; border-radius:11px !important; background:rgba(255,255,255,.78) !important; box-shadow:0 3px 14px rgba(0,0,0,.08) !important; }
+.cbx-proto #cbx-cfg .cbx-bar-row{ font-size:9px !important; }
+.cbx-proto #cbx-cfg .cbx-bar-toggle{ font-size:9.5px !important; }
 @media (max-width:760px){
   #cbx-cfg .cbx-view{min-height:400px}
   /* HUD mobile : colonne compacte à gauche (slider vertical + Cotes), sans flèches, cadre ajusté au slider */
@@ -413,6 +417,8 @@ html, body{ height:100%; margin:0; }
   //  → sur mobile (canvas étroit) on réduit la marge, donc le cache remplit bien plus le cadre.
   //  Le zoom manuel (molette/pincement) reste prioritaire tant que l'utilisateur n'a pas changé les dimensions.
   var userZoomed = false;
+  var PROTO = /[?&]proto=1/.test(location.search||'');   // mode prototype mobile : léger dézoom + HUD plus fin/plus à gauche
+  if(PROTO){try{document.documentElement.classList.add('cbx-proto');}catch(_){}}
   function camFit(){
     var w=viewEl.clientWidth||1, h=viewEl.clientHeight||1, aspect=w/h;
     // On ajoute une marge pour les cotes qui dépassent du cache (cote L sous le cache, porte ouverte sur le côté).
@@ -423,7 +429,7 @@ html, body{ height:100%; margin:0; }
     var distV=(halfH*padV)/Math.tan(vFov/2);
     var hFov=2*Math.atan(Math.tan(vFov/2)*Math.max(aspect,0.0001));
     var distH=(halfW*padH)/Math.tan(hFov/2);
-    return Math.max(70, Math.min(420, Math.max(distV, distH)));
+    return Math.max(70, Math.min(480, Math.max(distV, distH)*(PROTO?1.14:1)));   // PROTO : un poil plus dézoomé
   }
   // Applique le cadrage : distance + hauteur caméra (plus basse sur mobile → modèle bien centré, cotes non rognées) + re-visée.
   function applyFit(){

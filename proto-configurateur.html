@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Clim-Box">
+<meta name="theme-color" content="#A3BA1A">
 <title>Clim-Box · Prototype configurateur</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,8 +56,9 @@ img{max-width:100%}
   height:var(--sheetH,40vh);background:var(--panel);border-radius:22px 22px 0 0;box-shadow:var(--shadow);
   display:flex;flex-direction:column;transition:height .28s cubic-bezier(.22,.61,.36,1);overflow:hidden}
 #sheet.dragging{transition:none}
-.handlewrap{padding:9px 0 4px;display:flex;justify-content:center;flex:0 0 auto;cursor:grab;touch-action:none}
-.handle{width:40px;height:5px;border-radius:999px;background:var(--line)}
+.handlewrap{padding:13px 0 9px;display:flex;justify-content:center;flex:0 0 auto;cursor:grab;touch-action:none;position:relative}
+.handlewrap::before{content:"";position:absolute;left:0;right:0;top:-20px;bottom:-10px}  /* grande zone de préhension : ±20px autour de la poignée */
+.handle{width:44px;height:5px;border-radius:999px;background:var(--line)}
 .sheet-scroll{flex:1 1 auto;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:4px 16px 18px}
 .sheet-scroll::-webkit-scrollbar{width:0}
 
@@ -65,12 +71,13 @@ img{max-width:100%}
 .dimrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .dimcell .lab{font-size:12.5px;font-weight:600;text-align:center;margin-bottom:6px}
 .dimcell .lab small{display:block;color:var(--muted);font-weight:400;font-size:10px}
-.cstep{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:12px;background:var(--panel2);overflow:hidden}
-.cstep.err{border-color:var(--err);background:rgba(217,84,78,.08)}
-.cstep button{width:30px;height:46px;border:0;background:transparent;font-size:21px;line-height:1;color:var(--accent);flex:0 0 auto}
-.cstep button:active{background:var(--accent-soft)}
-.cstep input{width:100%;min-width:0;border:0;background:transparent;text-align:center;font-size:18px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;padding:0}
-.cstep input:focus{outline:none}
+/* case de saisie mise en avant (on tape le chiffre directement) ; −/+ en appoint discret */
+.cstep{display:flex;align-items:center;gap:5px}
+.cstep button{width:30px;height:48px;border:1.5px solid var(--line);border-radius:11px;background:var(--panel2);font-size:22px;line-height:1;color:var(--muted);flex:0 0 auto;font-weight:600}
+.cstep button:active{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-bright)}
+.cstep input{width:100%;min-width:0;height:48px;border:1.5px solid var(--line);border-radius:11px;background:var(--panel);text-align:center;font-size:19px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;padding:0;box-shadow:inset 0 1px 2px rgba(0,0,0,.05)}
+.cstep input:focus{outline:none;border-color:var(--accent-bright);box-shadow:0 0 0 3px var(--accent-soft)}
+.cstep.err input{border-color:var(--err);background:rgba(217,84,78,.08)}
 .errmsg{color:var(--err);font-size:11px;text-align:center;margin-top:5px;min-height:0}
 .linklike{background:none;border:0;color:var(--accent);font-weight:600;font-size:13px;padding:12px 0 2px;text-decoration:underline;text-underline-offset:3px}
 
@@ -120,7 +127,7 @@ img{max-width:100%}
 <body>
 
 <div id="stage">
-  <iframe id="viewer" title="Aperçu 3D du cache" src="clim-box-3d-viewer.html"></iframe>
+  <iframe id="viewer" title="Aperçu 3D du cache" src="clim-box-3d-viewer.html?proto=1"></iframe>
 </div>
 
 <header class="top">
@@ -138,12 +145,12 @@ img{max-width:100%}
     <div class="block">
       <h3>Dimensions intérieures (cm)</h3>
       <div class="dimrow">
-        <div class="dimcell"><div class="lab">Hauteur<small>porte</small></div>
-          <div class="cstep" data-k="H"><button data-d="-1">−</button><input id="inH" inputmode="decimal" value="60"><button data-d="1">+</button></div></div>
-        <div class="dimcell"><div class="lab">Largeur<small>porte</small></div>
-          <div class="cstep" data-k="L"><button data-d="-1">−</button><input id="inL" inputmode="decimal" value="35"><button data-d="1">+</button></div></div>
-        <div class="dimcell"><div class="lab">Profondeur<small>cache</small></div>
-          <div class="cstep" data-k="P"><button data-d="-1">−</button><input id="inP" inputmode="decimal" value="15"><button data-d="1">+</button></div></div>
+        <div class="dimcell"><div class="lab">Hauteur</div>
+          <div class="cstep" data-k="H"><button data-d="-1" aria-label="moins">−</button><input id="inH" inputmode="decimal" value="60" aria-label="Hauteur en cm"><button data-d="1" aria-label="plus">+</button></div></div>
+        <div class="dimcell"><div class="lab">Largeur</div>
+          <div class="cstep" data-k="L"><button data-d="-1" aria-label="moins">−</button><input id="inL" inputmode="decimal" value="35" aria-label="Largeur en cm"><button data-d="1" aria-label="plus">+</button></div></div>
+        <div class="dimcell"><div class="lab">Profondeur</div>
+          <div class="cstep" data-k="P"><button data-d="-1" aria-label="moins">−</button><input id="inP" inputmode="decimal" value="15" aria-label="Profondeur en cm"><button data-d="1" aria-label="plus">+</button></div></div>
       </div>
       <div class="errmsg" id="errMsg"></div>
       <button class="linklike" id="helpBtn">Comment mesurer mon tableau ?</button>
@@ -176,20 +183,22 @@ img{max-width:100%}
 
         <div class="opt"><div class="txt"><b>Découpe côté gauche</b><span>sur le flanc</span></div><button class="sw-toggle" id="dSG"></button></div>
         <div id="subSG" hidden>
-          <div class="opt" style="padding:8px 0"><div class="txt"><b>Tout découper</b><span>sur toute la hauteur</span></div><button class="sw-toggle" id="fullSG"></button></div>
           <div class="subdims">
             <div class="dimcell" id="cellSHg"><div class="lab">Hauteur</div><div class="cstep" data-k="SHg"><button data-d="-1">−</button><input id="inSHg" inputmode="decimal" value="10"><button data-d="1">+</button></div></div>
             <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="SPg"><button data-d="-1">−</button><input id="inSPg" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
           </div>
+          <div class="opt" style="padding:9px 0"><div class="txt"><b>Couper tout le haut</b><span>jusqu'au bord supérieur</span></div><button class="sw-toggle" id="cutTG"></button></div>
+          <div class="opt" style="padding:9px 0"><div class="txt"><b>Couper tout le bas</b><span>jusqu'au bord inférieur</span></div><button class="sw-toggle" id="cutBG"></button></div>
         </div>
 
         <div class="opt"><div class="txt"><b>Découpe côté droit</b><span>sur le flanc</span></div><button class="sw-toggle" id="dSD"></button></div>
         <div id="subSD" hidden>
-          <div class="opt" style="padding:8px 0"><div class="txt"><b>Tout découper</b><span>sur toute la hauteur</span></div><button class="sw-toggle" id="fullSD"></button></div>
           <div class="subdims">
             <div class="dimcell" id="cellSHd"><div class="lab">Hauteur</div><div class="cstep" data-k="SHd"><button data-d="-1">−</button><input id="inSHd" inputmode="decimal" value="10"><button data-d="1">+</button></div></div>
             <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="SPd"><button data-d="-1">−</button><input id="inSPd" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
           </div>
+          <div class="opt" style="padding:9px 0"><div class="txt"><b>Couper tout le haut</b><span>jusqu'au bord supérieur</span></div><button class="sw-toggle" id="cutTD"></button></div>
+          <div class="opt" style="padding:9px 0"><div class="txt"><b>Couper tout le bas</b><span>jusqu'au bord inférieur</span></div><button class="sw-toggle" id="cutBD"></button></div>
         </div>
 
         <div class="opt"><div class="txt"><b>Verrou à clé</b><span>ferme le cache à clé (+10 €)</span></div><button class="sw-toggle" id="lock"></button></div>
@@ -231,7 +240,7 @@ img{max-width:100%}
   var MAX={H:140,L:120,P:40};
   var state={H:60,L:35,P:15,hinge:'G',
     dHaut:false,NWt:12,NDt:4, dBas:false,NWb:12,NDb:4,
-    dSG:false,SHg:10,SPg:4,fullSG:false, dSD:false,SHd:10,SPd:4,fullSD:false, lock:false};
+    dSG:false,SHg:10,SPg:4,cutTG:false,cutBG:false, dSD:false,SHd:10,SPd:4,cutTD:false,cutBD:false, lock:false};
   var touched={};
   var frame=$('#viewer');
 
@@ -243,8 +252,8 @@ img{max-width:100%}
     w.postMessage({cbType:'cb-dims', L:state.L, H:state.H, P:state.P, hinge:state.hinge,
       decH:state.dHaut, nwT:state.NWt, nhT:state.NDt, nxT:nxT,
       decB:state.dBas,  nw:state.NWb,  nh:state.NDb,  nxB:nxB,
-      decCG:state.dSG, slH:state.SHg, slP:state.SPg, slY:null, slCT:state.fullSG, slCB:state.fullSG, slCtr:true,
-      decCD:state.dSD, srH:state.SHd, srP:state.SPd, srY:null, srCT:state.fullSD, srCB:state.fullSD, srCtr:true
+      decCG:state.dSG, slH:state.SHg, slP:state.SPg, slY:null, slCT:state.cutTG, slCB:state.cutBG, slCtr:true,
+      decCD:state.dSD, srH:state.SHd, srP:state.SPd, srY:null, srCT:state.cutTD, srCB:state.cutBD, srCtr:true
     },'*');
   }
   // le viewer peut mettre un court instant à écouter / finir son intro → on pousse plusieurs fois
@@ -284,8 +293,12 @@ img{max-width:100%}
   $('#advToggle').onclick=function(){$('#adv').classList.toggle('open');requestAnimationFrame(layout);};
   function tog(id,key,sub){var b=document.getElementById(id);b.onclick=function(){state[key]=!state[key];b.classList.toggle('on',state[key]);if(sub){document.getElementById(sub).hidden=!state[key];requestAnimationFrame(layout);}sync();};}
   tog('dHaut','dHaut','subHaut'); tog('dBas','dBas','subBas'); tog('dSG','dSG','subSG'); tog('dSD','dSD','subSD');
-  function togFull(id,key,cell){var b=document.getElementById(id);b.onclick=function(){state[key]=!state[key];b.classList.toggle('on',state[key]);var c=document.getElementById(cell);if(c)c.style.display=state[key]?'none':'';requestAnimationFrame(layout);sync();};}
-  togFull('fullSG','fullSG','cellSHg'); togFull('fullSD','fullSD','cellSHd');
+  function togCut(id,key,cellId,ctKey,cbKey){var b=document.getElementById(id);b.onclick=function(){
+    state[key]=!state[key];b.classList.toggle('on',state[key]);
+    var c=document.getElementById(cellId);if(c)c.style.display=(state[ctKey]&&state[cbKey])?'none':'';   // hauteur inutile si haut ET bas coupés
+    requestAnimationFrame(layout);sync();};}
+  togCut('cutTG','cutTG','cellSHg','cutTG','cutBG'); togCut('cutBG','cutBG','cellSHg','cutTG','cutBG');
+  togCut('cutTD','cutTD','cellSHd','cutTD','cutBD'); togCut('cutBD','cutBD','cellSHd','cutTD','cutBD');
   tog('lock','lock');   // serrure (option de prix ; n'affecte pas le 3D)
 
   /* ---- vraie date de fabrication (lot) depuis config.json ---- */
