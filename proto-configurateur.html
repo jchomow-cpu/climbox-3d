@@ -149,13 +149,8 @@ img{max-width:100%}
 
 <header class="top">
   <div class="brand"><span class="dot">◳</span> Clim-Box</div>
-  <div class="tools">
-    <button class="chip-ar" id="arBtn">▦ Voir chez moi</button>
-    <button class="iconbtn" id="themeBtn" aria-label="Thème">◐</button>
-  </div>
+  <div class="tools"></div>
 </header>
-
-<div id="a2hs" hidden>📲 <span>Plein écran : <b>Partager → Sur l'écran d'accueil</b></span> <button id="a2hsX" aria-label="Fermer">✕</button></div>
 
 <section id="sheet" aria-label="Options du cache">
   <div class="handlewrap" id="handle"><div class="handle"></div></div>
@@ -345,7 +340,6 @@ img{max-width:100%}
   $('#overlay').onclick=function(e){if(e.target===$('#overlay'))$('#overlay').classList.remove('show');};
   $('#guideDone').onclick=function(){$('#overlay').classList.remove('show');};
   var toastT;function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show')},2300);}
-  $('#arBtn').onclick=function(){toast('Aperçu en réalité augmentée — bientôt disponible');};
   function sideProp(active,h,p,cutT,cutB){ if(!active) return null;
     if(cutT&&cutB) return 'pleine hauteur · prof. '+p+' cm';
     var parts=[]; if(cutT)parts.push('coupé en haut'); if(cutB)parts.push('coupé en bas');
@@ -367,16 +361,6 @@ img{max-width:100%}
     if(dimErr('H')||dimErr('L')||dimErr('P')){toast('Vérifiez les dimensions');$('#scroll').scrollTo({top:0,behavior:'smooth'});return;}
     if(EMBED){ var c=$('#cta'); c.textContent='Ajout…'; try{ parent.postMessage(cartPayload(),'*'); }catch(e){} return; }
     var d=nDec();toast('Ajouté : '+state.L+'×'+state.H+'×'+state.P+' cm'+(d?(' · '+d+' découpe'+(d>1?'s':'')):'')+' · '+euro(price())+' (démo)');};
-  var th=null;$('#themeBtn').onclick=function(){var c=document.documentElement.getAttribute('data-theme');
-    th=(c==='dark')?'light':(c==='light'?null:'dark');if(th)document.documentElement.setAttribute('data-theme',th);else document.documentElement.removeAttribute('data-theme');};
-
-  /* ---- rappel « plein écran » (barre d'URL fermable seulement via l'écran d'accueil) ---- */
-  (function(){var el=$('#a2hs');if(!el)return;
-    var standalone=false;try{standalone=window.navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;}catch(e){}
-    var dism=false;try{dism=localStorage.getItem('cbx_a2hs')==='1';}catch(e){}
-    if(!standalone&&!dism)el.hidden=false;
-    $('#a2hsX').onclick=function(){el.hidden=true;try{localStorage.setItem('cbx_a2hs','1');}catch(e){}};
-  })();
 
   /* ---- feuille glissante : position LIBRE, le 3D s'adapte en continu ---- */
   var sheet=$('#sheet'),handle=$('#handle'),curPx=0,raf=0;
