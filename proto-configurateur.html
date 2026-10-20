@@ -323,18 +323,30 @@ img{max-width:100%}
   togCut('cutTD','cutTD','cellSHd','cutTD','cutBD','droite'); togCut('cutBD','cutBD','cellSHd','cutTD','cutBD','droite');
   tog('lock','lock');   // serrure (option de prix ; n'affecte pas le 3D)
 
-  /* ---- vraie date de fabrication (lot) depuis config.json ---- */
+  /* ---- date de fabrication : MÊME logique que le site (Session de fabrication v5) ----
+     Clôture = finCommandes de config.json si future, sinon prochain mercredi 21h (Paris) ; fabrication = clôture +1 j. */
   (function(){
-    var MOIS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-    function fr(d){var p=String(d).split('-');if(p.length!==3)return d;return (+p[2])+' '+MOIS[(+p[1])-1]+' '+p[0];}
-    fetch('config.json?cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(c){
-      var el=document.getElementById('fabInfo');if(!el||!c)return;
-      var t='Fabrication sur mesure';
-      if(c.fabrication) t+=' — prochaine fabrication le <b>'+fr(c.fabrication)+'</b>';
-      if(c.finCommandes) t+=' (commandez avant le '+fr(c.finCommandes)+')';
-      t+='. Le sens d’ouverture reste modifiable au montage.';
-      el.innerHTML=t;
-    }).catch(function(){});
+    var TZ='Europe/Paris', DAY=86400000;
+    var LOT={ closeDay:3, closeHour:21, fabOffset:1, finCommandes:'', fabrication:'' };
+    function pad(n){return String(n).padStart(2,'0');}
+    function frDate(ms,o){o=o||{weekday:'short',day:'numeric',month:'long'};o.timeZone=TZ;return new Date(ms).toLocaleDateString('fr-FR',o);}
+    function parisOffsetMs(t){var d=new Date(t);return new Date(d.toLocaleString('en-US',{timeZone:TZ}))-new Date(d.toLocaleString('en-US',{timeZone:'UTC'}));}
+    function parisTime(y,mo,d,h,mi){var base=Date.UTC(y,mo-1,d,h,mi||0);return base-parisOffsetMs(base);}
+    function nextWeeklyDeadline(){var now=Date.now(),ymd=new Date(now).toLocaleDateString('en-CA',{timeZone:TZ}).split('-').map(Number);for(var i=0;i<8;i++){var base=Date.UTC(ymd[0],ymd[1]-1,ymd[2]+i,LOT.closeHour,0);if(new Date(base).getUTCDay()!==LOT.closeDay)continue;var t=base-parisOffsetMs(base);if(t>now)return t;}return now+7*DAY;}
+    function parseConfigDate(str,defHour){if(!str||typeof str!=='string')return NaN;var m=str.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{1,2}):(\d{2}))?$/);if(!m)return NaN;return parisTime(+m[1],+m[2],+m[3],m[4]!==undefined?+m[4]:defHour,m[5]!==undefined?+m[5]:0);}
+    function render(){
+      var el=document.getElementById('fabInfo'); if(!el) return;
+      var now=Date.now();
+      var deadline=parseConfigDate(LOT.finCommandes,LOT.closeHour); if(!(deadline>now)) deadline=nextWeeklyDeadline();
+      var fab=parseConfigDate(LOT.fabrication,12); if(!(fab>deadline)) fab=deadline+LOT.fabOffset*DAY;
+      var hour=new Date(deadline).toLocaleTimeString('fr-FR',{hour:'numeric',minute:'2-digit',timeZone:TZ}).replace(':','h').replace('h00','h');
+      var left=deadline-now, msg;
+      if(left>=48*3600000){ msg='commandez avant <b>'+frDate(deadline,{day:'numeric',month:'long'})+' · '+hour+'</b>'; }
+      else { var mins=Math.max(0,Math.floor(left/60000)),hh=Math.floor(mins/60),mm=mins%60; msg='clôture dans <b>'+(hh>0?hh+'h '+pad(mm)+'min':mm+'min')+'</b>'; }
+      el.innerHTML='Fabrication sur mesure — prochaine fabrication le <b>'+frDate(fab)+'</b> ('+msg+'). Le sens d’ouverture reste modifiable au montage.';
+    }
+    render(); setInterval(render,30000);
+    fetch('config.json?cb='+Math.floor(Date.now()/600000),{cache:'no-store'}).then(function(r){return r.json();}).then(function(c){ if(!c)return; ['finCommandes','fabrication'].forEach(function(k){ if(c[k]!==undefined) LOT[k]=c[k]; }); render(); }).catch(function(){});
   })();
 
   $('#helpBtn').onclick=function(){$('#overlay').classList.add('show');};
