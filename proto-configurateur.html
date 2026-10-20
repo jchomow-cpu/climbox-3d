@@ -343,7 +343,7 @@ img{max-width:100%}
       var left=deadline-now, msg;
       if(left>=48*3600000){ msg='commandez avant <b>'+frDate(deadline,{day:'numeric',month:'long'})+' · '+hour+'</b>'; }
       else { var mins=Math.max(0,Math.floor(left/60000)),hh=Math.floor(mins/60),mm=mins%60; msg='clôture dans <b>'+(hh>0?hh+'h '+pad(mm)+'min':mm+'min')+'</b>'; }
-      el.innerHTML='Fabrication sur mesure — prochaine fabrication le <b>'+frDate(fab)+'</b> ('+msg+'). Le sens d’ouverture reste modifiable au montage.';
+      el.innerHTML='Fabrication sur mesure — prochaine fabrication le <b>'+frDate(fab)+'</b> ('+msg+').';
     }
     render(); setInterval(render,30000);
     fetch('config.json?cb='+Math.floor(Date.now()/600000),{cache:'no-store'}).then(function(r){return r.json();}).then(function(c){ if(!c)return; ['finCommandes','fabrication'].forEach(function(k){ if(c[k]!==undefined) LOT[k]=c[k]; }); render(); }).catch(function(){});
