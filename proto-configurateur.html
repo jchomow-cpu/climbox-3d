@@ -80,8 +80,9 @@ img{max-width:100%}
 .cstep input:focus{outline:none;border-color:var(--accent-bright);box-shadow:0 0 0 3px var(--accent-soft)}
 .cstep.err input{border-color:var(--err);background:rgba(217,84,78,.08)}
 .errmsg{color:var(--err);font-size:11px;text-align:center;margin-top:5px;min-height:0}
-.extdim{margin-top:10px;font-size:12.5px;color:var(--muted);text-align:center;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.extdim{margin-top:10px;font-size:12.5px;color:var(--muted);text-align:center;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;line-height:1.5}
 .extdim b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+.extdim .util{margin-top:3px;padding-top:3px;border-top:1px dashed var(--line)}
 .linklike{background:none;border:0;color:var(--accent);font-weight:600;font-size:13px;padding:12px 0 2px;text-decoration:underline;text-underline-offset:3px}
 
 .seg{display:flex;gap:8px}
@@ -294,7 +295,10 @@ img{max-width:100%}
   function fnum(n){return (Math.round(n*10)/10).toString().replace('.',',');}
   function refreshExt(){ var el=$('#extDim'); if(!el)return;
     if(state.H>0&&state.L>0&&state.P>0){ el.hidden=false;
-      el.innerHTML='Encombrement total : <b>H '+fnum(state.H+3.6)+' · L '+fnum(state.L+3.6)+' · P '+fnum(state.P+1.8)+' cm</b>'; }
+      var luw=state.L-(state.L>60?5:2.5);   // largeur utile (ressaut des charnières)
+      var huh=state.H-3;                      // hauteur utile (équerres de fixation)
+      el.innerHTML='<div>Dimensions extérieures : <b>H '+fnum(state.H+3.6)+' · L '+fnum(state.L+3.6)+' · P '+fnum(state.P+1.8)+' cm</b></div>'
+        +'<div class="util">Dimensions utiles : <b>L '+fnum(luw)+' · H '+fnum(huh)+' cm</b></div>'; }
     else el.hidden=true; }
   function sync(){ refreshPrice(); refreshExt(); showErr(); push(); }
 
