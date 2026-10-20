@@ -282,8 +282,9 @@ img{max-width:100%}
 
   /* ---- prix / validation ---- */
   var euro=function(n){return n.toFixed(2).replace('.',',')+' €'};
+  var BASE=117.95; try{var _m=/[?&]base=([\d.]+)/.exec(location.search); if(_m) BASE=parseFloat(_m[1])||117.95;}catch(e){}
   function nDec(){return (state.dHaut?1:0)+(state.dBas?1:0)+(state.dSG?1:0)+(state.dSD?1:0);}
-  function price(){var s=state.H+state.L+state.P,base=117.95;var supp=s>130?Math.ceil(s-130)*1.9:0;return base+supp+nDec()*5+(state.lock?10:0);}
+  function price(){var s=state.H+state.L+state.P;var supp=s>130?Math.ceil(s-130):0;return BASE+supp+nDec()*5+(state.lock?10:0);}   // supplément 1 €/cm au-delà de 130, découpe 5 €, serrure 10 €
   function clamp(k,v){v=Math.round(v);if(MAX[k])v=Math.min(v,MAX[k]);v=Math.max(v,MIN[k]||0);return v;}
   function dimErr(k){if(k!=='H'&&k!=='L'&&k!=='P')return false;var v=state[k];return v>0&&(v<MIN[k]||v>MAX[k]);}
   function showErr(){
@@ -345,9 +346,27 @@ img{max-width:100%}
   $('#guideDone').onclick=function(){$('#overlay').classList.remove('show');};
   var toastT;function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove('show')},2300);}
   $('#arBtn').onclick=function(){toast('Aperçu en réalité augmentée — bientôt disponible');};
+  function sideProp(active,h,p,cutT,cutB){ if(!active) return null;
+    if(cutT&&cutB) return 'pleine hauteur · prof. '+p+' cm';
+    var parts=[]; if(cutT)parts.push('coupé en haut'); if(cutB)parts.push('coupé en bas');
+    return (parts.length?parts.join(' + ')+' · ':'')+'haut. '+h+' cm · prof. '+p+' cm'; }
+  function cartPayload(){
+    var sum=state.H+state.L+state.P;
+    var props={ "Hauteur intérieure (cm)":String(state.H), "Largeur intérieure (cm)":String(state.L),
+      "Profondeur intérieure (cm)":String(state.P),
+      "Sens d'ouverture": state.hinge==='G' ? "Charnières à gauche" : "Charnières à droite" };
+    if(state.dHaut) props["Découpe haute"]=state.NWt+' × '+state.NDt+' cm';
+    if(state.dBas)  props["Découpe basse"]=state.NWb+' × '+state.NDb+' cm';
+    var sg=sideProp(state.dSG,state.SHg,state.SPg,state.cutTG,state.cutBG); if(sg) props["Découpe côté gauche"]=sg;
+    var sd=sideProp(state.dSD,state.SHd,state.SPd,state.cutTD,state.cutBD); if(sd) props["Découpe côté droit"]=sd;
+    if(state.lock) props["Verrou à clé"]="Oui";
+    return { cbType:'cbx-addcart', supp: sum>130?Math.ceil(sum-130):0, decoupes:nDec(), lock:state.lock,
+      props:props, summary: state.L+'×'+state.H+'×'+state.P+' cm' }; }
+  var EMBED=false; try{ EMBED=(window.self!==window.top); }catch(e){ EMBED=true; }
   $('#cta').onclick=function(){touched.H=touched.L=touched.P=true;showErr();
     if(dimErr('H')||dimErr('L')||dimErr('P')){toast('Vérifiez les dimensions');$('#scroll').scrollTo({top:0,behavior:'smooth'});return;}
-    var d=nDec();toast('Ajouté : '+state.L+'×'+state.H+'×'+state.P+' cm'+(d?(' · '+d+' découpe'+(d>1?'s':'')):'')+' · '+euro(price()));};
+    if(EMBED){ var c=$('#cta'); c.textContent='Ajout…'; try{ parent.postMessage(cartPayload(),'*'); }catch(e){} return; }
+    var d=nDec();toast('Ajouté : '+state.L+'×'+state.H+'×'+state.P+' cm'+(d?(' · '+d+' découpe'+(d>1?'s':'')):'')+' · '+euro(price())+' (démo)');};
   var th=null;$('#themeBtn').onclick=function(){var c=document.documentElement.getAttribute('data-theme');
     th=(c==='dark')?'light':(c==='light'?null:'dark');if(th)document.documentElement.setAttribute('data-theme',th);else document.documentElement.removeAttribute('data-theme');};
 
