@@ -192,7 +192,7 @@ img{max-width:100%}
           </div>
         </div>
 
-        <div class="opt"><div class="txt"><b>Verrou à clé</b><span>ferme le cache à clé (+12 €)</span></div><button class="sw-toggle" id="lock"></button></div>
+        <div class="opt"><div class="txt"><b>Verrou à clé</b><span>ferme le cache à clé (+10 €)</span></div><button class="sw-toggle" id="lock"></button></div>
 
       </div>
     </div>
@@ -254,7 +254,7 @@ img{max-width:100%}
   /* ---- prix / validation ---- */
   var euro=function(n){return n.toFixed(2).replace('.',',')+' €'};
   function nDec(){return (state.dHaut?1:0)+(state.dBas?1:0)+(state.dSG?1:0)+(state.dSD?1:0);}
-  function price(){var s=state.H+state.L+state.P,base=117.95;var supp=s>130?Math.ceil(s-130)*1.9:0;return base+supp+nDec()*5+(state.lock?12:0);}
+  function price(){var s=state.H+state.L+state.P,base=117.95;var supp=s>130?Math.ceil(s-130)*1.9:0;return base+supp+nDec()*5+(state.lock?10:0);}
   function clamp(k,v){v=Math.round(v);if(MAX[k])v=Math.min(v,MAX[k]);v=Math.max(v,MIN[k]||0);return v;}
   function dimErr(k){if(k!=='H'&&k!=='L'&&k!=='P')return false;var v=state[k];return v>0&&(v<MIN[k]||v>MAX[k]);}
   function showErr(){
