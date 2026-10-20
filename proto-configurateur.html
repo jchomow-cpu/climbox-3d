@@ -295,11 +295,8 @@ img{max-width:100%}
   function fnum(n){return (Math.round(n*10)/10).toString().replace('.',',');}
   function refreshExt(){ var el=$('#extDim'); if(!el)return;
     if(state.H>0&&state.L>0&&state.P>0){ el.hidden=false;
-      var luw=state.L-(state.L>60?5:2.5);   // largeur utile (ressaut des charnières)
-      var huh=state.H-3;                      // hauteur utile (équerres de fixation)
-      el.innerHTML='<div>Dimensions extérieures : <b>H '+fnum(state.H+3.6)+' · L '+fnum(state.L+3.6)+' · P '+fnum(state.P+1.8)+' cm</b></div>'
-        +'<div class="util">Dimensions utiles : <b>L '+fnum(luw)+' · H '+fnum(huh)+' cm</b></div>'; }
-    else el.hidden=true; }
+      el.innerHTML='Dimensions extérieures : <b>H '+fnum(state.H+3.6)+' · L '+fnum(state.L+3.6)+' · P '+fnum(state.P+1.8)+' cm</b>'; }
+    else el.hidden=true; }   /* les dimensions utiles sont affichées sur le 3D (cotes dorées) */
   function sync(){ refreshPrice(); refreshExt(); showErr(); push(); }
 
   /* ---- steppers ----
