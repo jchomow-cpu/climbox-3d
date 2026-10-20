@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <title>Clim-Box · Prototype configurateur</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -31,7 +31,8 @@
 html,body{height:100%;margin:0}
 body{font-family:var(--font);color:var(--ink);background:var(--bg2);overflow:hidden;-webkit-text-size-adjust:100%}
 *{box-sizing:border-box}
-button{font-family:inherit;color:inherit;cursor:pointer}
+button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+.cstep,.sw-toggle,.seg,.swm{touch-action:manipulation}
 img{max-width:100%}
 
 #stage{position:fixed;top:0;left:0;right:0;height:52vh;z-index:0;
@@ -96,7 +97,7 @@ img{max-width:100%}
 .subdims .dimcell .lab{text-align:left;font-size:11.5px}
 
 #bar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--panel);border-top:1px solid var(--line);
-  padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.06)}
+  padding:8px 16px calc(4px + env(safe-area-inset-bottom,0px));display:flex;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.06)}
 #bar .price{flex:0 0 auto}
 #bar .price .lbl{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 #bar .price .val{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.05}
@@ -174,15 +175,21 @@ img{max-width:100%}
         </div>
 
         <div class="opt"><div class="txt"><b>Découpe côté gauche</b><span>sur le flanc</span></div><button class="sw-toggle" id="dSG"></button></div>
-        <div class="subdims" id="subSG" hidden>
-          <div class="dimcell"><div class="lab">Hauteur</div><div class="cstep" data-k="SHg"><button data-d="-1">−</button><input id="inSHg" inputmode="decimal" value="10"><button data-d="1">+</button></div></div>
-          <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="SPg"><button data-d="-1">−</button><input id="inSPg" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
+        <div id="subSG" hidden>
+          <div class="opt" style="padding:8px 0"><div class="txt"><b>Tout découper</b><span>sur toute la hauteur</span></div><button class="sw-toggle" id="fullSG"></button></div>
+          <div class="subdims">
+            <div class="dimcell" id="cellSHg"><div class="lab">Hauteur</div><div class="cstep" data-k="SHg"><button data-d="-1">−</button><input id="inSHg" inputmode="decimal" value="10"><button data-d="1">+</button></div></div>
+            <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="SPg"><button data-d="-1">−</button><input id="inSPg" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
+          </div>
         </div>
 
         <div class="opt"><div class="txt"><b>Découpe côté droit</b><span>sur le flanc</span></div><button class="sw-toggle" id="dSD"></button></div>
-        <div class="subdims" id="subSD" hidden>
-          <div class="dimcell"><div class="lab">Hauteur</div><div class="cstep" data-k="SHd"><button data-d="-1">−</button><input id="inSHd" inputmode="decimal" value="10"><button data-d="1">+</button></div></div>
-          <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="SPd"><button data-d="-1">−</button><input id="inSPd" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
+        <div id="subSD" hidden>
+          <div class="opt" style="padding:8px 0"><div class="txt"><b>Tout découper</b><span>sur toute la hauteur</span></div><button class="sw-toggle" id="fullSD"></button></div>
+          <div class="subdims">
+            <div class="dimcell" id="cellSHd"><div class="lab">Hauteur</div><div class="cstep" data-k="SHd"><button data-d="-1">−</button><input id="inSHd" inputmode="decimal" value="10"><button data-d="1">+</button></div></div>
+            <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="SPd"><button data-d="-1">−</button><input id="inSPd" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
+          </div>
         </div>
 
       </div>
@@ -221,7 +228,8 @@ img{max-width:100%}
   var MIN={H:20,L:15,P:7,NWt:4,NDt:2,NWb:4,NDb:2,SHg:4,SPg:2,SHd:4,SPd:2};
   var MAX={H:140,L:120,P:40};
   var state={H:60,L:35,P:15,hinge:'G',
-    dHaut:false,NWt:12,NDt:4, dBas:false,NWb:12,NDb:4, dSG:false,SHg:10,SPg:4, dSD:false,SHd:10,SPd:4};
+    dHaut:false,NWt:12,NDt:4, dBas:false,NWb:12,NDb:4,
+    dSG:false,SHg:10,SPg:4,fullSG:false, dSD:false,SHd:10,SPd:4,fullSD:false};
   var touched={};
   var frame=$('#viewer');
 
@@ -233,8 +241,8 @@ img{max-width:100%}
     w.postMessage({cbType:'cb-dims', L:state.L, H:state.H, P:state.P, hinge:state.hinge,
       decH:state.dHaut, nwT:state.NWt, nhT:state.NDt, nxT:nxT,
       decB:state.dBas,  nw:state.NWb,  nh:state.NDb,  nxB:nxB,
-      decCG:state.dSG, slH:state.SHg, slP:state.SPg, slY:null, slCT:false, slCB:false, slCtr:true,
-      decCD:state.dSD, srH:state.SHd, srP:state.SPd, srY:null, srCT:false, srCB:false, srCtr:true
+      decCG:state.dSG, slH:state.SHg, slP:state.SPg, slY:null, slCT:state.fullSG, slCB:state.fullSG, slCtr:true,
+      decCD:state.dSD, srH:state.SHd, srP:state.SPd, srY:null, srCT:state.fullSD, srCB:state.fullSD, srCtr:true
     },'*');
   }
   // le viewer peut mettre un court instant à écouter / finir son intro → on pousse plusieurs fois
@@ -253,16 +261,19 @@ img{max-width:100%}
       if(bad)msgs.push({H:'Hauteur',L:'Largeur',P:'Profondeur'}[k]+' : '+MIN[k]+'–'+MAX[k]+' cm');});
     $('#errMsg').textContent=msgs[0]||'';
   }
-  function sync(){ $('#priceVal').textContent=euro(price()); showErr(); push(); }
+  function refreshPrice(){ $('#priceVal').textContent=euro(price()); }
+  function sync(){ refreshPrice(); showErr(); push(); }
 
-  /* ---- steppers ---- */
+  /* ---- steppers ----
+     dimensions principales : 3D en direct ; dimensions de découpe : 3D mis à jour au blur
+     (les boutons +/− restent instantanés) pour ne pas surcharger le visu pendant la frappe. */
   document.querySelectorAll('.cstep').forEach(function(st){
-    var k=st.getAttribute('data-k'),inp=st.querySelector('input');
+    var k=st.getAttribute('data-k'),inp=st.querySelector('input'),isMain=(k==='H'||k==='L'||k==='P');
     st.querySelectorAll('button').forEach(function(btn){btn.onclick=function(){
       state[k]=clamp(k,(state[k]||0)+ +btn.getAttribute('data-d'));inp.value=state[k];touched[k]=true;sync();};});
-    inp.addEventListener('input',function(){var v=parseFloat(inp.value.replace(',','.'));state[k]=isNaN(v)?0:v;sync();});
+    inp.addEventListener('input',function(){var v=parseFloat(inp.value.replace(',','.'));state[k]=isNaN(v)?0:v; if(isMain)sync(); else{refreshPrice();showErr();} });
     inp.addEventListener('focus',function(){touched[k]=false;showErr();});
-    inp.addEventListener('blur',function(){touched[k]=true;if(state[k]>0)state[k]=clamp(k,state[k]);inp.value=state[k]||'';showErr();});
+    inp.addEventListener('blur',function(){touched[k]=true;if(state[k]>0)state[k]=clamp(k,state[k]);inp.value=state[k]||'';showErr();sync();});
   });
 
   document.querySelectorAll('#sens button').forEach(function(b){b.onclick=function(){
@@ -271,6 +282,8 @@ img{max-width:100%}
   $('#advToggle').onclick=function(){$('#adv').classList.toggle('open');requestAnimationFrame(layout);};
   function tog(id,key,sub){var b=document.getElementById(id);b.onclick=function(){state[key]=!state[key];b.classList.toggle('on',state[key]);if(sub){document.getElementById(sub).hidden=!state[key];requestAnimationFrame(layout);}sync();};}
   tog('dHaut','dHaut','subHaut'); tog('dBas','dBas','subBas'); tog('dSG','dSG','subSG'); tog('dSD','dSD','subSD');
+  function togFull(id,key,cell){var b=document.getElementById(id);b.onclick=function(){state[key]=!state[key];b.classList.toggle('on',state[key]);var c=document.getElementById(cell);if(c)c.style.display=state[key]?'none':'';requestAnimationFrame(layout);sync();};}
+  togFull('fullSG','fullSG','cellSHg'); togFull('fullSD','fullSD','cellSHd');
 
   $('#helpBtn').onclick=function(){$('#overlay').classList.add('show');};
   $('#overlay').onclick=function(e){if(e.target===$('#overlay'))$('#overlay').classList.remove('show');};
