@@ -144,11 +144,12 @@ img{max-width:100%}
 <body>
 
 <div id="stage">
-  <iframe id="viewer" title="Aperçu 3D du cache" src="clim-box-3d-viewer.html?proto=1"></iframe>
+  <iframe id="viewer" title="Aperçu 3D du cache"></iframe>
+  <script>document.getElementById('viewer').src='clim-box-3d-viewer.html?proto=1&v='+Math.floor(Date.now()/60000);</script>
 </div>
 
 <header class="top">
-  <div class="brand"><span class="dot">◳</span> Clim-Box</div>
+  <div class="brand"><img src="https://cdn.shopify.com/s/files/1/0567/3867/6922/files/logo_2_1ba52704-ff69-4506-814d-a393b5c099a2.png?v=1754752264" alt="Clim-Box" style="height:24px;width:auto;opacity:.85;display:block"></div>
   <div class="tools"></div>
 </header>
 
