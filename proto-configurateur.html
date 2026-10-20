@@ -192,10 +192,12 @@ img{max-width:100%}
           </div>
         </div>
 
+        <div class="opt"><div class="txt"><b>Verrou à clé</b><span>ferme le cache à clé (+12 €)</span></div><button class="sw-toggle" id="lock"></button></div>
+
       </div>
     </div>
 
-    <p class="hint" style="padding:12px 0 4px;border-top:1px solid var(--line)">Fabrication sur mesure, expédié sous 2 à 3 semaines. Le sens d'ouverture reste modifiable au montage.</p>
+    <p class="hint" id="fabInfo" style="padding:12px 0 4px;border-top:1px solid var(--line)">Fabrication sur mesure. Le sens d'ouverture reste modifiable au montage.</p>
   </div>
 </section>
 
@@ -229,7 +231,7 @@ img{max-width:100%}
   var MAX={H:140,L:120,P:40};
   var state={H:60,L:35,P:15,hinge:'G',
     dHaut:false,NWt:12,NDt:4, dBas:false,NWb:12,NDb:4,
-    dSG:false,SHg:10,SPg:4,fullSG:false, dSD:false,SHd:10,SPd:4,fullSD:false};
+    dSG:false,SHg:10,SPg:4,fullSG:false, dSD:false,SHd:10,SPd:4,fullSD:false, lock:false};
   var touched={};
   var frame=$('#viewer');
 
@@ -252,7 +254,7 @@ img{max-width:100%}
   /* ---- prix / validation ---- */
   var euro=function(n){return n.toFixed(2).replace('.',',')+' €'};
   function nDec(){return (state.dHaut?1:0)+(state.dBas?1:0)+(state.dSG?1:0)+(state.dSD?1:0);}
-  function price(){var s=state.H+state.L+state.P,base=117.95;var supp=s>130?Math.ceil(s-130)*1.9:0;return base+supp+nDec()*5;}
+  function price(){var s=state.H+state.L+state.P,base=117.95;var supp=s>130?Math.ceil(s-130)*1.9:0;return base+supp+nDec()*5+(state.lock?12:0);}
   function clamp(k,v){v=Math.round(v);if(MAX[k])v=Math.min(v,MAX[k]);v=Math.max(v,MIN[k]||0);return v;}
   function dimErr(k){if(k!=='H'&&k!=='L'&&k!=='P')return false;var v=state[k];return v>0&&(v<MIN[k]||v>MAX[k]);}
   function showErr(){
@@ -284,6 +286,21 @@ img{max-width:100%}
   tog('dHaut','dHaut','subHaut'); tog('dBas','dBas','subBas'); tog('dSG','dSG','subSG'); tog('dSD','dSD','subSD');
   function togFull(id,key,cell){var b=document.getElementById(id);b.onclick=function(){state[key]=!state[key];b.classList.toggle('on',state[key]);var c=document.getElementById(cell);if(c)c.style.display=state[key]?'none':'';requestAnimationFrame(layout);sync();};}
   togFull('fullSG','fullSG','cellSHg'); togFull('fullSD','fullSD','cellSHd');
+  tog('lock','lock');   // serrure (option de prix ; n'affecte pas le 3D)
+
+  /* ---- vraie date de fabrication (lot) depuis config.json ---- */
+  (function(){
+    var MOIS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+    function fr(d){var p=String(d).split('-');if(p.length!==3)return d;return (+p[2])+' '+MOIS[(+p[1])-1]+' '+p[0];}
+    fetch('config.json?cb='+Date.now(),{cache:'no-store'}).then(function(r){return r.json();}).then(function(c){
+      var el=document.getElementById('fabInfo');if(!el||!c)return;
+      var t='Fabrication sur mesure';
+      if(c.fabrication) t+=' — prochaine fabrication le <b>'+fr(c.fabrication)+'</b>';
+      if(c.finCommandes) t+=' (commandez avant le '+fr(c.finCommandes)+')';
+      t+='. Le sens d’ouverture reste modifiable au montage.';
+      el.innerHTML=t;
+    }).catch(function(){});
+  })();
 
   $('#helpBtn').onclick=function(){$('#overlay').classList.add('show');};
   $('#overlay').onclick=function(e){if(e.target===$('#overlay'))$('#overlay').classList.remove('show');};
