@@ -348,7 +348,7 @@ html, body{ height:100%; margin:0; }
     finish:"bois", grainH:false, open:90, showDims:true,
     hinge:'G' };   // sens d'ouverture (porte unique) : 'G' charnières à gauche (défaut) · 'D' à droite
   var T = 1.8; // épaisseur des panneaux (cm)
-  var MARGE_COTE = 3; // marge conservée en haut/bas d'une découpe latérale, à 3 cm du début de la hauteur intérieure (cm)
+  var MARGE_COTE = 0; // la découpe latérale peut aller jusqu'au bord intérieur (bas = 0, haut = pleine hauteur intérieure) — demandé
   // centre X d'une encoche selon la distance au bord gauche (sinon centrée)
   function notchCenter(L,nwv,nxv){
     // espace NOMINAL 0..L : centre nominal, puis mappé sur l'intérieur physique (×sc)
@@ -597,9 +597,11 @@ html, body{ height:100%; margin:0; }
       dim([xl,yL,zb],[xr2,yL,zb],null,null,null,null,fmt(cnwN),[xc,yL+1.6,zb],olv,(sgn>0));
       // Marges G/D (petites cotes) : entre chaque bord et le début de la découpe.
       var xcN=xc/sc, mgL=(xcN-cnwN/2)+L/2, mgR=L/2-(xcN+cnwN/2);
-      // Petites cotes de marge : seulement pour un petit écart (sinon long trait inutile qui encombre ; la position est déjà dans le champ « Dist. bord gauche »).
-      if(mgL>0.4 && mgL<=8) smallDim([-hw,yL,zb],[xl,yL,zb],fmt(mgL),[(-hw+xl)/2,yL-sgn*1.6,zb],olv);
-      if(mgR>0.4 && mgR<=8) smallDim([xr2,yL,zb],[hw,yL,zb],fmt(mgR),[(xr2+hw)/2,yL-sgn*1.6,zb],olv);
+      // Cote de position : si la découpe est décentrée (nxv>0), on montre TOUJOURS la distance depuis le bord gauche (demandé). Sinon, petites cotes de marge seulement pour un petit écart.
+      var positioned=(nxv!=null && nxv>0);
+      // découpe décentrée → on cote la distance des DEUX bords (gauche ET droit), sinon seulement les petits écarts.
+      if(mgL>0.4 && (positioned || mgL<=8)) smallDim([-hw,yL,zb],[xl,yL,zb],fmt(mgL),[(-hw+xl)/2,yL-sgn*1.6,zb],olv);
+      if(mgR>0.4 && (positioned || mgR<=8)) smallDim([xr2,yL,zb],[hw,yL,zb],fmt(mgR),[(xr2+hw)/2,yL-sgn*1.6,zb],olv);
       // PROFONDEUR de l'encoche : cote À L'EXTÉRIEUR du cache, juste au bord (pas trop loin) — demandé.
       var xd=xc, yD=(sgn>0 ? H/2 : -H/2) + sgn*3;
       dim([xd,yD,zb],[xd,yD,zb+cnh],[xd,yD,zb],[xd,yD,zb+cnh],[xd,yD,zb],[xd,yD,zb+cnh],fmt(cnh),[xd,yD+sgn*1.4,zb+cnh/2],olv);
@@ -633,6 +635,10 @@ html, body{ height:100%; margin:0; }
       var zh=zb+cd+2.0;              // hauteur (le long de y), vers l'avant de l'encoche
       dim([xf,ycD-hhD,zh],[xf,ycD+hhD,zh],[xf,ycD-hhD,zh],[xf,ycD+hhD,zh],[xf,ycD-hhD,zh],[xf,ycD+hhD,zh],fmt(hD),[xf,ycD,zh+2.2],olv);
       g.add(dashed([xf,ycD-hhD,zb+cd],[xf,ycD-hhD,zh],olv)); g.add(dashed([xf,ycD+hhD,zb+cd],[xf,ycD+hhD,zh],olv));
+      // Cotes de position : distance des DEUX bords (bas ET haut intérieurs) si découpe décentrée, ni coupée en haut ni en bas — demandé.
+      if(!cfg.ctr && !cfg.cutT && !cfg.cutB){ var iBot=-H/2+T, iTop=H/2-T, dB=yB-iBot, dT=iTop-yT;
+        if(dB>0.4){ smallDim([xf,iBot,zb],[xf,yB,zb],fmt(dB),[xf,(iBot+yB)/2,zb-0.1],olv); g.add(dashed([xfd,iBot,zb],[xf,iBot,zb],olv)); }
+        if(dT>0.4){ smallDim([xf,yT,zb],[xf,iTop,zb],fmt(dT),[xf,(yT+iTop)/2,zb-0.1],olv); g.add(dashed([xfd,iTop,zb],[xf,iTop,zb],olv)); } }
     }
     sideDims(-1, sideCfg(-1));
     sideDims(+1, sideCfg(+1));
