@@ -400,7 +400,7 @@ img{max-width:100%}
     var sg=sideProp(state.dSG,state.SHg,state.SPg,state.cutTG,state.cutBG); if(sg) props["Découpe côté gauche"]=sg;
     var sd=sideProp(state.dSD,state.SHd,state.SPd,state.cutTD,state.cutBD); if(sd) props["Découpe côté droit"]=sd;
     if(state.lock) props["Verrou à clé"]="Oui";
-    try{ var ld=cbLotDates&&cbLotDates(); if(ld){ props["Fabrication prévue"]=ld.fab; props["Livraison estimée"]=ld.delivery; } }catch(e){}
+    try{ var ld=cbLotDates&&cbLotDates(); if(ld){ props["Livraison estimée"]=ld.delivery; } }catch(e){}
     return { cbType:'cbx-addcart', supp: sum>130?Math.ceil(sum-130):0, decoupes:nDec(), lock:state.lock,
       props:props, summary: state.L+'×'+state.H+'×'+state.P+' cm' }; }
   var EMBED=false; try{ EMBED=(window.self!==window.top); }catch(e){ EMBED=true; }
