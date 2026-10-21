@@ -428,7 +428,7 @@ html, body{ height:100%; margin:0; }
     var mob=(w<560);
     // marge unique autour du cache+cotes (plus de dézoom ×1.30 empilé) :
     //  mobile confortable ; desktop proto serré → le cache remplit presque toute la colonne quelle que soit la hauteur.
-    var pad=mob?1.30:(PROTO?1.20:1.18);
+    var pad=mob?1.30:(PROTO?1.44:1.18);
     var distV=(halfH*pad)/Math.tan(vFov/2);
     var hFov=2*Math.atan(Math.tan(vFov/2)*Math.max(aspect,0.0001));
     var distH=(halfW*pad)/Math.tan(hFov/2);
