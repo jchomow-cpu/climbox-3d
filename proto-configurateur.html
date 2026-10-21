@@ -114,6 +114,8 @@ img{max-width:100%}
 #subSG .sw-toggle, #subSD .sw-toggle{width:44px;height:26px}
 #subSG .sw-toggle::after, #subSD .sw-toggle::after{width:20px;height:20px}
 #subSG .sw-toggle.on::after, #subSD .sw-toggle.on::after{left:21px}
+/* switches SECONDAIRES (options internes d'une découpe) : ramenés vers le milieu, pas collés à droite — hiérarchie visuelle */
+#subHaut>.opt .sw-toggle, #subBas>.opt .sw-toggle, #subSG .opt .sw-toggle, #subSD .opt .sw-toggle{margin-right:38%}
 
 #bar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--panel);border-top:1px solid var(--line);
   padding:7px 16px calc(4px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;box-shadow:0 -4px 20px rgba(0,0,0,.06)}
@@ -369,12 +371,12 @@ img{max-width:100%}
   function tog(id,key,sub,focus){var b=document.getElementById(id);b.onclick=function(){state[key]=!state[key];b.classList.toggle('on',state[key]);if(sub){document.getElementById(sub).hidden=!state[key];requestAnimationFrame(layout);}sync(focus?(state[key]?focus:'front'):undefined);};}
   tog('dHaut','dHaut','subHaut','haut'); tog('dBas','dBas','subBas','bas'); tog('dSG','dSG','subSG','gauche'); tog('dSD','dSD','subSD','droite');
   // « Découpe centrée » : ON => centrée ; OFF => champ distance visible (haut/bas = depuis le bord gauche ; côtés = depuis le bas)
-  function togCtr(id,key,posSub,focus){var b=document.getElementById(id);b.onclick=function(){
+  function togCtr(id,key,posSub){var b=document.getElementById(id);b.onclick=function(){
     state[key]=!state[key];b.classList.toggle('on',state[key]);
     var ps=document.getElementById(posSub);if(ps)ps.hidden=state[key];
-    requestAnimationFrame(layout);sync(focus);};}
-  togCtr('ctrT','ctrT','posHaut','haut'); togCtr('ctrB','ctrB','posBas','bas');
-  togCtr('ctrG','ctrG','posSG','gauche'); togCtr('ctrD','ctrD','posSD','droite');
+    requestAnimationFrame(layout);sync();};}   // option secondaire → pas de mouvement caméra
+  togCtr('ctrT','ctrT','posHaut'); togCtr('ctrB','ctrB','posBas');
+  togCtr('ctrG','ctrG','posSG'); togCtr('ctrD','ctrD','posSD');
   function togCut(id,key,cellId,ctKey,cbKey,focus){var b=document.getElementById(id);b.onclick=function(){
     state[key]=!state[key];b.classList.toggle('on',state[key]);
     var c=document.getElementById(cellId);if(c)c.style.display=(state[ctKey]&&state[cbKey])?'none':'';   // hauteur inutile si haut ET bas coupés
@@ -382,7 +384,7 @@ img{max-width:100%}
     var anyCut=state[ctKey]||state[cbKey], sfx=(focus==='gauche')?'G':'D';
     var rc=document.getElementById('rowCtr'+sfx), ps=document.getElementById('posS'+sfx);
     if(rc)rc.style.display=anyCut?'none':''; if(ps)ps.hidden=anyCut?true:state['ctr'+sfx];
-    requestAnimationFrame(layout);sync(focus);};}
+    requestAnimationFrame(layout);sync();};}   // option secondaire → pas de mouvement caméra (focus sert juste à repérer le côté)
   togCut('cutTG','cutTG','cellSHg','cutTG','cutBG','gauche'); togCut('cutBG','cutBG','cellSHg','cutTG','cutBG','gauche');
   togCut('cutTD','cutTD','cellSHd','cutTD','cutBD','droite'); togCut('cutBD','cutBD','cellSHd','cutTD','cutBD','droite');
   tog('lock','lock');   // serrure (option de prix ; n'affecte pas le 3D)
