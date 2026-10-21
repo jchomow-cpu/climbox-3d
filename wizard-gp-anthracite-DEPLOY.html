@@ -1,27 +1,11 @@
-<!-- AIGUILLEUR : DESKTOP = ancien configurateur a etapes (inline, meme 3D) ; MOBILE = nouveau proto plein ecran. L'ancien wizard est dans wizard-gp-anthracite-MODAL-backup.html. -->
+<!-- ANTHRACITE : proto plein ecran sur TOUS les ecrans (mobile = tiroir, desktop = 2 colonnes). Backup ancien wizard a etapes : wizard-gp-bois-MODAL-backup.html. -->
 <script>
 (function(){
   if(window.__cbProtoInit) return; window.__cbProtoInit=1;
   try{ if(window.self!==window.top) return; }catch(e){ return; }   /* éditeur / preview GemPages (iframe) : on ne touche pas */
 
-  /* ---- DESKTOP : on sert l'ancien configurateur à étapes (inline), même 3D ---- */
-  try{
-    if(window.matchMedia && window.matchMedia('(min-width: 900px)').matches){
-      var MODAL='https://jchomow-cpu.github.io/climbox-3d/wizard-gp-anthracite-MODAL-backup.html?v='+Math.floor(Date.now()/60000);
-      var host=document.getElementById('cbw-host'); if(!host){ host=document.createElement('div'); host.id='cbw-host'; document.body.appendChild(host); }
-      var runW=function(html){
-        var tmp=document.createElement('div'); tmp.innerHTML=html;
-        var scripts=[].slice.call(tmp.querySelectorAll('script'));
-        scripts.forEach(function(s){ if(s.parentNode) s.parentNode.removeChild(s); });
-        while(tmp.firstChild){ host.appendChild(tmp.firstChild); }
-        scripts.forEach(function(old){ var s=document.createElement('script'); for(var i=0;i<old.attributes.length;i++){ s.setAttribute(old.attributes[i].name, old.attributes[i].value); } s.textContent=old.textContent; document.body.appendChild(s); });
-      };
-      fetch(MODAL,{cache:'no-store'}).then(function(r){return r.text();}).then(runW).catch(function(e){ console.warn('[CBW] desktop wizard load failed', e); });
-      return;
-    }
-  }catch(e){}
-
-  /* ---- MOBILE : nouveau proto plein écran (panier Shopify réel) ---- */
+  /* ---- ANTHRACITE : proto plein écran sur TOUS les écrans — mobile = tiroir, desktop = 2 colonnes. Panier Shopify réel.
+     (Revert = remettre la branche desktop qui injecte wizard-gp-bois-MODAL-backup.html.) ---- */
   var PROTO='https://jchomow-cpu.github.io/climbox-3d/proto-configurateur.html?base=117.95&viewer=clim-box-3d-viewer-anthracite.html&v='+Math.floor(Date.now()/60000);
   var BASE_VARIANT='53540915872077', SUPP='52316783313229', DECOUPE='53962214506829', LOCK='54268144681293';
   var LABEL='Configurer mon cache sur mesure', ov=null;
