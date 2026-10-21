@@ -352,25 +352,31 @@ img{max-width:100%}
 
   /* ---- date de fabrication : MÊME logique que le site (Session de fabrication v5) ----
      Clôture = finCommandes de config.json si future, sinon prochain mercredi 21h (Paris) ; fabrication = clôture +1 j. */
+  var cbLotDates=null;   // exposé pour cartPayload : { fab, delivery, deadline, past48, left }
   (function(){
     var TZ='Europe/Paris', DAY=86400000;
-    var LOT={ closeDay:3, closeHour:21, fabOffset:1, finCommandes:'', fabrication:'' };
+    var LOT={ closeDay:3, closeHour:21, fabOffset:1, offDelivStart:8, offDelivEnd:9, finCommandes:'', fabrication:'' };
     function pad(n){return String(n).padStart(2,'0');}
     function frDate(ms,o){o=o||{weekday:'short',day:'numeric',month:'long'};o.timeZone=TZ;return new Date(ms).toLocaleDateString('fr-FR',o);}
     function parisOffsetMs(t){var d=new Date(t);return new Date(d.toLocaleString('en-US',{timeZone:TZ}))-new Date(d.toLocaleString('en-US',{timeZone:'UTC'}));}
     function parisTime(y,mo,d,h,mi){var base=Date.UTC(y,mo-1,d,h,mi||0);return base-parisOffsetMs(base);}
     function nextWeeklyDeadline(){var now=Date.now(),ymd=new Date(now).toLocaleDateString('en-CA',{timeZone:TZ}).split('-').map(Number);for(var i=0;i<8;i++){var base=Date.UTC(ymd[0],ymd[1]-1,ymd[2]+i,LOT.closeHour,0);if(new Date(base).getUTCDay()!==LOT.closeDay)continue;var t=base-parisOffsetMs(base);if(t>now)return t;}return now+7*DAY;}
     function parseConfigDate(str,defHour){if(!str||typeof str!=='string')return NaN;var m=str.trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{1,2}):(\d{2}))?$/);if(!m)return NaN;return parisTime(+m[1],+m[2],+m[3],m[4]!==undefined?+m[4]:defHour,m[5]!==undefined?+m[5]:0);}
-    function render(){
-      var el=document.getElementById('fabInfo'); if(!el) return;
+    function lotRange(a,b){var same=frDate(a,{month:'long',year:'numeric'})===frDate(b,{month:'long',year:'numeric'});return (same?frDate(a,{day:'numeric'}):frDate(a,{day:'numeric',month:'long'}))+' – '+frDate(b,{day:'numeric',month:'long'});}
+    cbLotDates=function(){
       var now=Date.now();
       var deadline=parseConfigDate(LOT.finCommandes,LOT.closeHour); if(!(deadline>now)) deadline=nextWeeklyDeadline();
       var fab=parseConfigDate(LOT.fabrication,12); if(!(fab>deadline)) fab=deadline+LOT.fabOffset*DAY;
+      var d0=fab+LOT.offDelivStart*DAY, d1=fab+LOT.offDelivEnd*DAY;
       var hour=new Date(deadline).toLocaleTimeString('fr-FR',{hour:'numeric',minute:'2-digit',timeZone:TZ}).replace(':','h').replace('h00','h');
-      var left=deadline-now, msg;
-      if(left>=48*3600000){ msg='commandez avant <b>'+frDate(deadline,{day:'numeric',month:'long'})+' · '+hour+'</b>'; }
-      else { var mins=Math.max(0,Math.floor(left/60000)),hh=Math.floor(mins/60),mm=mins%60; msg='clôture dans <b>'+(hh>0?hh+'h '+pad(mm)+'min':mm+'min')+'</b>'; }
-      el.innerHTML='Fabrication sur mesure — prochaine fabrication le <b>'+frDate(fab)+'</b> ('+msg+').';
+      return { fab:frDate(fab), delivery:lotRange(d0,d1), deadline:frDate(deadline,{day:'numeric',month:'long'})+' · '+hour, past48:(deadline-now)>=48*3600000, left:deadline-now };
+    };
+    function render(){
+      var el=document.getElementById('fabInfo'); if(!el) return;
+      var d=cbLotDates(), msg;
+      if(d.past48){ msg='commandez avant <b>'+d.deadline+'</b>'; }
+      else { var mins=Math.max(0,Math.floor(d.left/60000)),hh=Math.floor(mins/60),mm=mins%60; msg='clôture dans <b>'+(hh>0?hh+'h '+pad(mm)+'min':mm+'min')+'</b>'; }
+      el.innerHTML='Fabrication sur mesure — prochaine fabrication le <b>'+d.fab+'</b> ('+msg+').';
     }
     render(); setInterval(render,30000);
     fetch('config.json?cb='+Math.floor(Date.now()/600000),{cache:'no-store'}).then(function(r){return r.json();}).then(function(c){ if(!c)return; ['finCommandes','fabrication'].forEach(function(k){ if(c[k]!==undefined) LOT[k]=c[k]; }); render(); }).catch(function(){});
@@ -394,6 +400,7 @@ img{max-width:100%}
     var sg=sideProp(state.dSG,state.SHg,state.SPg,state.cutTG,state.cutBG); if(sg) props["Découpe côté gauche"]=sg;
     var sd=sideProp(state.dSD,state.SHd,state.SPd,state.cutTD,state.cutBD); if(sd) props["Découpe côté droit"]=sd;
     if(state.lock) props["Verrou à clé"]="Oui";
+    try{ var ld=cbLotDates&&cbLotDates(); if(ld){ props["Fabrication prévue"]=ld.fab; props["Livraison estimée"]=ld.delivery; } }catch(e){}
     return { cbType:'cbx-addcart', supp: sum>130?Math.ceil(sum-130):0, decoupes:nDec(), lock:state.lock,
       props:props, summary: state.L+'×'+state.H+'×'+state.P+' cm' }; }
   var EMBED=false; try{ EMBED=(window.self!==window.top); }catch(e){ EMBED=true; }
