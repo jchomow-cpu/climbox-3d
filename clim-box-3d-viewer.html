@@ -429,7 +429,9 @@ html, body{ height:100%; margin:0; }
     var distV=(halfH*padV)/Math.tan(vFov/2);
     var hFov=2*Math.atan(Math.tan(vFov/2)*Math.max(aspect,0.0001));
     var distH=(halfW*padH)/Math.tan(hFov/2);
-    return Math.max(70, Math.min(480, Math.max(distV, distH)));   // le cache remplit l'espace dédié (plus de dézoom PROTO)
+    var d=Math.max(distV, distH);
+    if(PROTO && !mob) d*=1.30;   // proto desktop (2 colonnes) : dézoom 30%
+    return Math.max(70, Math.min(520, d));
   }
   // Applique le cadrage : distance + hauteur caméra (plus basse sur mobile → modèle bien centré, cotes non rognées) + re-visée.
   function applyFit(){

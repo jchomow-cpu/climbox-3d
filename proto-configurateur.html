@@ -106,6 +106,14 @@ img{max-width:100%}
 .sw-toggle.on{background:var(--accent-bright)}.sw-toggle.on::after{left:23px}
 .subdims{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 0 12px}
 .subdims .dimcell .lab{text-align:left;font-size:11.5px}
+/* découpes latérales : sous-bloc indenté (barre à gauche) pour bien distinguer « couper tout le haut/bas » des options principales (verrou, etc.) */
+#subSG, #subSD{margin:0 0 8px;padding-left:16px;border-left:3px solid var(--line)}
+#subSG .subdims, #subSD .subdims{padding-top:10px}
+#subSG .opt, #subSD .opt{border-top:1px dashed var(--line);padding:8px 0}
+#subSG .opt .txt b, #subSD .opt .txt b{font-size:12.5px}
+#subSG .sw-toggle, #subSD .sw-toggle{width:44px;height:26px}
+#subSG .sw-toggle::after, #subSD .sw-toggle::after{width:20px;height:20px}
+#subSG .sw-toggle.on::after, #subSD .sw-toggle.on::after{left:21px}
 
 #bar{position:fixed;left:0;right:0;bottom:0;z-index:40;background:var(--panel);border-top:1px solid var(--line);
   padding:7px 16px calc(4px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;box-shadow:0 -4px 20px rgba(0,0,0,.06)}
@@ -395,6 +403,7 @@ img{max-width:100%}
     var d=nDec();toast('Ajouté : '+state.L+'×'+state.H+'×'+state.P+' cm'+(d?(' · '+d+' découpe'+(d>1?'s':'')):'')+' · '+euro(price())+' (démo)');};
 
   /* ---- feuille glissante : position LIBRE, le 3D s'adapte en continu ---- */
+  var layout=function(){};   // no-op par défaut (desktop 2 colonnes) ; redéfini ci-dessous pour le tiroir mobile
   var __DESKTOP=false; try{__DESKTOP=matchMedia('(min-width:900px)').matches;}catch(e){}
   if(__DESKTOP){ sync(); requestAnimationFrame(function(){ try{ window.dispatchEvent(new Event('resize')); }catch(e){} }); }
   else {
@@ -402,10 +411,10 @@ img{max-width:100%}
   var MIN3D=110;                                  // on garde toujours au moins ce 3D visible
   function footerH(){return ($('#bar').offsetHeight||76);}
   function clampPx(px){var maxPx=innerHeight-footerH()-MIN3D, minPx=Math.round(innerHeight*0.14);return Math.max(minPx,Math.min(maxPx,px));}
-  function layout(){
+  layout=function(){
     document.documentElement.style.setProperty('--footerH',footerH()+'px');
     $('#stage').style.height=Math.max(MIN3D,innerHeight-sheet.offsetHeight-footerH())+'px';
-  }
+  };
   function setH(px,anim){ if(!anim)sheet.classList.add('dragging'); curPx=clampPx(px); sheet.style.height=curPx+'px';
     if(anim){sheet.classList.remove('dragging');} layout(); }
   var dr=false,sy=0,h0=0,moved=false;
