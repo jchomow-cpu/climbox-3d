@@ -423,21 +423,24 @@ html, body{ height:100%; margin:0; }
     var w=viewEl.clientWidth||1, h=viewEl.clientHeight||1, aspect=w/h;
     // On ajoute une marge pour les cotes qui dépassent du cache (cote L sous le cache, porte ouverte sur le côté).
     var Hy=(state.H||60)+2*T, halfH=Hy/2+6, halfW=(Math.max(state.L||35, state.P||15)/2)+(state.P||15)*0.6+4;
+    var maxDim=Math.max(state.L||35, Hy, state.P||15); var k=63.6/maxDim; halfH*=k; halfW*=k;   // le modèle 3D est normalisé (plus grande dim → 72) : on cadre la taille RÉELLE à l'écran (réf H60·L35·P15 inchangée → les grands caches se remplissent aussi)
     var vFov=camera.fov*Math.PI/180;
     var mob=(w<560);
-    var padV=mob?1.30:1.18, padH=mob?1.30:1.18;   // mobile : marge confortable (moins zoomé) autour du cache + cotes
-    var distV=(halfH*padV)/Math.tan(vFov/2);
+    // marge unique autour du cache+cotes (plus de dézoom ×1.30 empilé) :
+    //  mobile confortable ; desktop proto serré → le cache remplit presque toute la colonne quelle que soit la hauteur.
+    var pad=mob?1.30:(PROTO?1.20:1.18);
+    var distV=(halfH*pad)/Math.tan(vFov/2);
     var hFov=2*Math.atan(Math.tan(vFov/2)*Math.max(aspect,0.0001));
-    var distH=(halfW*padH)/Math.tan(hFov/2);
+    var distH=(halfW*pad)/Math.tan(hFov/2);
     var d=Math.max(distV, distH);
-    if(PROTO && !mob) d*=1.30;   // proto desktop (2 colonnes) : dézoom 30%
-    return Math.max(70, Math.min(520, d));
+    d=Math.max(70, Math.min(520, d));
+    return d;
   }
   // Applique le cadrage : distance + hauteur caméra (plus basse sur mobile → modèle bien centré, cotes non rognées) + re-visée.
   function applyFit(){
     CAM_END_Z = camFit();
     camera.position.z = CAM_END_Z;
-    camera.position.y = (viewEl.clientWidth<560) ? 3 : 12;
+    camera.position.y = (viewEl.clientWidth<560) ? 3 : (PROTO?2:12);   // proto desktop : caméra plus basse → la cote de largeur sous le cache n'est pas rognée
     camera.lookAt(0,0,0);
   }
 
@@ -1323,7 +1326,7 @@ html, body{ height:100%; margin:0; }
   // ---- init ----
   setActivePreset("75");
   camera.position.set(0, 60, 420); // position de départ pour l'intro
-  resize(); build(); syncReadout(); CAM_END_Z = camFit(); requestAnimationFrame(loop);
+  resize(); build(); syncReadout(); CAM_END_Z = camFit(); CAM_END_Y = (viewEl.clientWidth<560)?3:(PROTO?2:12); requestAnimationFrame(loop);
   // Les cotes 3D sont rendues sur canvas : on reconstruit une fois Inter chargée pour qu'elles l'utilisent (sinon fallback Arial au 1er rendu).
   try{ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ cbLastKey=''; build(); syncReadout(); }); }catch(e){}
 })();
