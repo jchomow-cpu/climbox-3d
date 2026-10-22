@@ -107,7 +107,14 @@ img{max-width:100%}
 .subdims{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 0 12px}
 .subdims .dimcell .lab{text-align:left;font-size:11.5px}
 .hint{font-size:11px;color:var(--muted);margin-top:5px;text-align:left}
-.hint-ctr{display:block;text-align:center;color:var(--accent);cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}   /* « centre = X cm » : texte centré sous la case, cliquable pour recentrer */
+#fabInfo .fab-lab{font-size:11.5px;color:var(--muted)}
+#fabInfo .fab-deliv{font-size:16px;color:var(--ink);font-weight:800;margin-top:1px}
+#fabInfo .fab-note{font-size:11.5px;color:var(--muted);margin-top:5px;line-height:1.4}
+.hint-ctr{display:block;text-align:center;color:var(--muted);cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}   /* « centre = X cm » : texte centré sous la case, couleur normale, cliquable pour recentrer */
+/* bloc position : colonne unique, label + case + indice tous centrés et alignés */
+#posHaut,#posBas,#posSG,#posSD{grid-template-columns:1fr}
+#posHaut .lab,#posBas .lab,#posSG .lab,#posSD .lab{text-align:center}
+#posHaut .cstep,#posBas .cstep,#posSG .cstep,#posSD .cstep{max-width:170px;margin:0 auto}
 /* découpes latérales : sous-bloc indenté (barre à gauche) pour bien distinguer « couper tout le haut/bas » des options principales (verrou, etc.) */
 #subSG, #subSD{margin:0 0 8px;padding-left:16px;border-left:3px solid var(--line)}
 #subSG .subdims, #subSD .subdims{padding-top:10px}
@@ -424,14 +431,14 @@ img{max-width:100%}
       var fab=parseConfigDate(LOT.fabrication,12); if(!(fab>deadline)) fab=deadline+LOT.fabOffset*DAY;
       var d0=fab+LOT.offDelivStart*DAY, d1=fab+LOT.offDelivEnd*DAY;
       var hour=new Date(deadline).toLocaleTimeString('fr-FR',{hour:'numeric',minute:'2-digit',timeZone:TZ}).replace(':','h').replace('h00','h');
-      return { fab:frDate(fab), delivery:lotRange(d0,d1), deadline:frDate(deadline,{day:'numeric',month:'long'})+' · '+hour, past48:(deadline-now)>=48*3600000, left:deadline-now };
+      return { fab:frDate(fab), delivery:lotRange(d0,d1), deadline:frDate(deadline,{weekday:'short',day:'numeric',month:'long'})+' · '+hour, past48:(deadline-now)>=48*3600000, left:deadline-now };
     };
     function render(){
       var el=document.getElementById('fabInfo'); if(!el) return;
-      var d=cbLotDates(), msg;
-      if(d.past48){ msg='commandez avant <b>'+d.deadline+'</b>'; }
-      else { var mins=Math.max(0,Math.floor(d.left/60000)),hh=Math.floor(mins/60),mm=mins%60; msg='clôture dans <b>'+(hh>0?hh+'h '+pad(mm)+'min':mm+'min')+'</b>'; }
-      el.innerHTML='Fabrication sur mesure — prochaine fabrication le <b>'+d.fab+'</b> ('+msg+').';
+      var d=cbLotDates();
+      el.innerHTML='<span class="fab-lab">Livraison estimée</span>'
+        +'<div class="fab-deliv">'+d.delivery+'</div>'
+        +'<div class="fab-note">Commandez avant <b>'+d.deadline+'</b> pour être dans la prochaine fabrication.</div>';
     }
     render(); setInterval(render,30000);
     fetch('config.json?cb='+Math.floor(Date.now()/600000),{cache:'no-store'}).then(function(r){return r.json();}).then(function(c){ if(!c)return; ['finCommandes','fabrication'].forEach(function(k){ if(c[k]!==undefined) LOT[k]=c[k]; }); render(); }).catch(function(){});

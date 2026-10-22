@@ -555,7 +555,8 @@ html, body{ height:100%; margin:0; }
     function fmt(v){return (Math.round(v*10)/10)+' cm';}
     function V(p){return new THREE.Vector3(p[0],p[1],p[2]);}
     function dim(p1,p2,e1a,e1b,e2a,e2b,txt,lp,c,onTop){c=c||col;
-      function top(m){ if(onTop&&m&&m.material){m.material.depthTest=false;m.renderOrder=33;} return m; }
+      // onTop ne coupe PLUS le test de profondeur (les cotes ne doivent pas traverser le cache) — il ne sert qu'à l'ordre d'affichage entre cotes.
+      function top(m){ if(onTop&&m&&m.material){m.renderOrder=33;} return m; }
       g.add(top(tube(p1,p2,r,c)));
       var d=new THREE.Vector3().subVectors(V(p2),V(p1)).normalize();
       var pp=new THREE.Vector3().crossVectors(d,new THREE.Vector3(0,0,1));
@@ -563,7 +564,7 @@ html, body{ height:100%; margin:0; }
       pp.normalize(); var tl=1.0;
       function tick(p){g.add(top(tube([p[0]-pp.x*tl,p[1]-pp.y*tl,p[2]-pp.z*tl],[p[0]+pp.x*tl,p[1]+pp.y*tl,p[2]+pp.z*tl],r,c)));}
       tick(p1);tick(p2);
-      var lb=makeDimLabel(txt,null,null,!!onTop,c);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
+      var lb=makeDimLabel(txt,null,null,false,c);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
     // petite cote (marges de découpe) : trait fin, petit label
     function smallDim(p1,p2,txt,lp,c){c=c||olv;var rr=0.12;
       g.add(tube(p1,p2,rr,c));
@@ -573,7 +574,7 @@ html, body{ height:100%; margin:0; }
       pp.normalize(); var tl=0.6;
       function tick(p){g.add(tube([p[0]-pp.x*tl,p[1]-pp.y*tl,p[2]-pp.z*tl],[p[0]+pp.x*tl,p[1]+pp.y*tl,p[2]+pp.z*tl],rr,c));}
       tick(p1);tick(p2);
-      var lb=makeDimLabel(txt,2.0,30,true,c);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
+      var lb=makeDimLabel(txt,2.0,30,false,c);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
     var ix=L/2-T, iy=H/2-T;                 // faces intérieures (utile)
     // Largeur intérieure
     var yb=-H/2-off;
@@ -590,22 +591,21 @@ html, body{ height:100%; margin:0; }
       if(!on)return;
       // Espace NOMINAL 0..L mappé sur l'intérieur physique (L-2T) : réduire la valeur réduit visiblement l'encoche.
       var sc=(L-2*T)/L, W=L-2*T, cnwN=Math.min(nwv,L), cnw=cnwN*sc, cnh=Math.min(nhv,P-0.2),
-          sgn=(yc<0)?-1:1, yL=yc-sgn*4, zb=-P/2, hw=W/2;   // LARGEUR à l'INTÉRIEUR du cache (sous la découpe) — demandé
+          sgn=(yc<0)?-1:1, zb=-P/2, hw=W/2;
       var xc=notchCenter(L,nwv,nxv), xl=xc-cnw/2, xr2=xc+cnw/2;
-      // Cote LARGEUR de la découpe (trait + chiffre) — À L'INTÉRIEUR du cache (dans l'ouverture), haut ET bas.
-      // Le haut est rendu « au-dessus » (sans test de profondeur) sinon le panneau supérieur le masque en vue plongeante.
-      dim([xl,yL,zb],[xr2,yL,zb],null,null,null,null,fmt(cnwN),[xc,yL+1.6,zb],olv,(sgn>0));
-      // Marges G/D (petites cotes) : entre chaque bord et le début de la découpe.
+      // LARGEUR + distances : À L'EXTÉRIEUR du cache (au-dessus du bord haut / sous le bord bas) — demandé.
+      var yO=(sgn>0 ? H/2 : -H/2) + sgn*4.5;
+      dim([xl,yO,zb],[xr2,yO,zb],null,null,null,null,fmt(cnwN),[xc,yO+sgn*1.7,zb],olv);
+      g.add(dashed([xl,yc,zb],[xl,yO,zb],olv)); g.add(dashed([xr2,yc,zb],[xr2,yO,zb],olv));
+      // Distances depuis les deux bords (petites cotes), sur la même ligne extérieure.
       var xcN=xc/sc, mgL=(xcN-cnwN/2)+L/2, mgR=L/2-(xcN+cnwN/2);
-      // Cote de position : si la découpe est décentrée (nxv>0), on montre TOUJOURS la distance depuis le bord gauche (demandé). Sinon, petites cotes de marge seulement pour un petit écart.
       var positioned=(nxv!=null && nxv>0);
-      // découpe décentrée → on cote la distance des DEUX bords (gauche ET droit), sinon seulement les petits écarts.
-      if(mgL>0.4 && (positioned || mgL<=8)) smallDim([-hw,yL,zb],[xl,yL,zb],fmt(mgL),[(-hw+xl)/2,yL-sgn*1.6,zb],olv);
-      if(mgR>0.4 && (positioned || mgR<=8)) smallDim([xr2,yL,zb],[hw,yL,zb],fmt(mgR),[(xr2+hw)/2,yL-sgn*1.6,zb],olv);
-      // PROFONDEUR de l'encoche : cote À L'EXTÉRIEUR du cache, juste au bord (pas trop loin) — demandé.
-      var xd=xc, yD=(sgn>0 ? H/2 : -H/2) + sgn*3;
-      dim([xd,yD,zb],[xd,yD,zb+cnh],[xd,yD,zb],[xd,yD,zb+cnh],[xd,yD,zb],[xd,yD,zb+cnh],fmt(cnh),[xd,yD+sgn*1.4,zb+cnh/2],olv);
-      g.add(dashed([xd,yc,zb],[xd,yD,zb],olv)); g.add(dashed([xd,yc,zb+cnh],[xd,yD,zb+cnh],olv));
+      if(mgL>0.4 && (positioned || mgL<=8)) smallDim([-hw,yO,zb],[xl,yO,zb],fmt(mgL),[(-hw+xl)/2,yO-sgn*1.7,zb],olv);
+      if(mgR>0.4 && (positioned || mgR<=8)) smallDim([xr2,yO,zb],[hw,yO,zb],fmt(mgR),[(xr2+hw)/2,yO-sgn*1.7,zb],olv);
+      // PROFONDEUR de l'encoche : À L'INTÉRIEUR du cache, suspendue dans l'ouverture juste sous le panneau, vers l'arrière — demandé.
+      var yI=sgn*(H/2-T) - sgn*3, xd=xc;
+      dim([xd,yI,zb],[xd,yI,zb+cnh],[xd,yI,zb],[xd,yI,zb+cnh],[xd,yI,zb],[xd,yI,zb+cnh],fmt(cnh),[xd+2.6,yI-sgn*0.8,zb+cnh/2],olv);
+      g.add(dashed([xd,sgn*(H/2-T),zb],[xd,yI,zb],olv));
     }
     notchDims(-H/2+T/2, state.notch, state.nw, state.nh, state.nx);
     notchDims( H/2-T/2, state.notchTop, state.nwT, state.nhT, state.nxT);
