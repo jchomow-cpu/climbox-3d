@@ -80,7 +80,7 @@ img{max-width:100%}
 .cstep input:focus{outline:none;border-color:var(--accent-bright);box-shadow:0 0 0 3px var(--accent-soft)}
 .cstep.err input{border-color:var(--err);background:rgba(217,84,78,.08)}
 .errmsg{color:var(--err);font-size:11px;text-align:center;margin-top:5px;min-height:0}
-.extdim{margin-top:10px;font-size:12.5px;color:var(--muted);text-align:center;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;line-height:1.5}
+.extdim{margin-top:10px;font-size:12.5px;color:var(--muted);text-align:center;padding:4px 0;line-height:1.5}
 .extdim b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
 .extdim .util{margin-top:3px;padding-top:3px;border-top:1px dashed var(--line)}
 .linklike{background:none;border:0;color:var(--accent);font-weight:600;font-size:13px;padding:12px 0 2px;text-decoration:underline;text-underline-offset:3px}
@@ -106,8 +106,8 @@ img{max-width:100%}
 .sw-toggle.on{background:var(--accent-bright)}.sw-toggle.on::after{left:23px}
 .subdims{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 0 12px}
 .subdims .dimcell .lab{text-align:left;font-size:11.5px}
-.hint{display:inline-block;font-size:11px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:3px 10px;margin-top:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}   /* clic = remet la valeur du centre dans la case */
-.hint:active{background:var(--line)}
+.hint{font-size:11px;color:var(--muted);margin-top:5px;text-align:left}
+.hint-ctr{display:block;text-align:center;color:var(--accent);cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}   /* « centre = X cm » : texte centré sous la case, cliquable pour recentrer */
 /* découpes latérales : sous-bloc indenté (barre à gauche) pour bien distinguer « couper tout le haut/bas » des options principales (verrou, etc.) */
 #subSG, #subSD{margin:0 0 8px;padding-left:16px;border-left:3px solid var(--line)}
 #subSG .subdims, #subSD .subdims{padding-top:10px}
@@ -169,6 +169,9 @@ img{max-width:100%}
   .overlay{align-items:center;justify-content:center;padding:24px}
   .modal{max-width:520px;border-radius:18px;max-height:86vh}
   #toast{bottom:28px}
+  /* desktop : cases de mesure moins larges (sinon trop étirées dans la colonne) */
+  .dimrow .cstep{max-width:120px;margin:0 auto}
+  .subdims .cstep{max-width:150px}
 }
 </style>
 </head>
@@ -224,7 +227,7 @@ img{max-width:100%}
             <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="NDt"><button data-d="-1">−</button><input id="inNDt" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
           </div>
           <div class="subdims" id="posHaut">
-            <div class="dimcell"><div class="lab">Distance du bord gauche</div><div class="cstep" data-k="posT"><button data-d="-1">−</button><input id="inPosT" inputmode="decimal" value="11.5"><button data-d="1">+</button></div><div class="hint" id="hintT">centre = 11,5 cm</div></div>
+            <div class="dimcell"><div class="lab">Distance du bord gauche</div><div class="cstep" data-k="posT"><button data-d="-1">−</button><input id="inPosT" inputmode="decimal" value="11.5"><button data-d="1">+</button></div><div class="hint hint-ctr" id="hintT">centre = 11,5 cm</div></div>
           </div>
         </div>
 
@@ -235,7 +238,7 @@ img{max-width:100%}
             <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="NDb"><button data-d="-1">−</button><input id="inNDb" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
           </div>
           <div class="subdims" id="posBas">
-            <div class="dimcell"><div class="lab">Distance du bord gauche</div><div class="cstep" data-k="posB"><button data-d="-1">−</button><input id="inPosB" inputmode="decimal" value="11.5"><button data-d="1">+</button></div><div class="hint" id="hintB">centre = 11,5 cm</div></div>
+            <div class="dimcell"><div class="lab">Distance du bord gauche</div><div class="cstep" data-k="posB"><button data-d="-1">−</button><input id="inPosB" inputmode="decimal" value="11.5"><button data-d="1">+</button></div><div class="hint hint-ctr" id="hintB">centre = 11,5 cm</div></div>
           </div>
         </div>
 
@@ -246,7 +249,7 @@ img{max-width:100%}
             <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="SPg"><button data-d="-1">−</button><input id="inSPg" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
           </div>
           <div class="subdims" id="posSG">
-            <div class="dimcell"><div class="lab">Distance du bas</div><div class="cstep" data-k="posG"><button data-d="-1">−</button><input id="inPosG" inputmode="decimal" value="25"><button data-d="1">+</button></div><div class="hint" id="hintG">centre = 25 cm</div></div>
+            <div class="dimcell"><div class="lab">Distance du bas</div><div class="cstep" data-k="posG"><button data-d="-1">−</button><input id="inPosG" inputmode="decimal" value="25"><button data-d="1">+</button></div><div class="hint hint-ctr" id="hintG">centre = 25 cm</div></div>
           </div>
           <div class="opt" style="padding:9px 0"><div class="txt"><b>Couper tout le haut</b><span>jusqu'au bord supérieur</span></div><button class="sw-toggle" id="cutTG"></button></div>
           <div class="opt" style="padding:9px 0"><div class="txt"><b>Couper tout le bas</b><span>jusqu'au bord inférieur</span></div><button class="sw-toggle" id="cutBG"></button></div>
@@ -259,13 +262,13 @@ img{max-width:100%}
             <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="SPd"><button data-d="-1">−</button><input id="inSPd" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
           </div>
           <div class="subdims" id="posSD">
-            <div class="dimcell"><div class="lab">Distance du bas</div><div class="cstep" data-k="posD"><button data-d="-1">−</button><input id="inPosD" inputmode="decimal" value="25"><button data-d="1">+</button></div><div class="hint" id="hintD">centre = 25 cm</div></div>
+            <div class="dimcell"><div class="lab">Distance du bas</div><div class="cstep" data-k="posD"><button data-d="-1">−</button><input id="inPosD" inputmode="decimal" value="25"><button data-d="1">+</button></div><div class="hint hint-ctr" id="hintD">centre = 25 cm</div></div>
           </div>
           <div class="opt" style="padding:9px 0"><div class="txt"><b>Couper tout le haut</b><span>jusqu'au bord supérieur</span></div><button class="sw-toggle" id="cutTD"></button></div>
           <div class="opt" style="padding:9px 0"><div class="txt"><b>Couper tout le bas</b><span>jusqu'au bord inférieur</span></div><button class="sw-toggle" id="cutBD"></button></div>
         </div>
 
-        <div class="opt"><div class="txt"><b>Verrou à clé</b><span>ferme le cache à clé (+10 €)</span></div><button class="sw-toggle" id="lock"></button></div>
+        <div class="opt"><div class="txt"><b>Verrou à clé</b><span>ferme le cache à clé</span></div><button class="sw-toggle" id="lock"></button></div>
 
       </div>
     </div>
