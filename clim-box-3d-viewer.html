@@ -554,9 +554,10 @@ html, body{ height:100%; margin:0; }
   function addDimensions(parent,L,H,P){var g=new THREE.Object3D(),col=0x141414,olv=0x6c7a00,off=4,fz=P/2,r=0.22,re=0.1;
     function fmt(v){return (Math.round(v*10)/10)+' cm';}
     function V(p){return new THREE.Vector3(p[0],p[1],p[2]);}
-    function dim(p1,p2,e1a,e1b,e2a,e2b,txt,lp,c,onTop,lh){c=c||col;
+    function dim(p1,p2,e1a,e1b,e2a,e2b,txt,lp,c,onTop,lh,thru){c=c||col;
       // onTop ne coupe PLUS le test de profondeur (les cotes ne doivent pas traverser le cache) — il ne sert qu'à l'ordre d'affichage entre cotes.
-      function top(m){ if(onTop&&m&&m.material){m.renderOrder=33;} return m; }
+      // thru = exception : cote dans une zone découpée (profondeur d'encoche) → toujours visible (depthTest off).
+      function top(m){ if(m&&m.material){ if(thru)m.material.depthTest=false; if(onTop||thru)m.renderOrder=33; } return m; }
       g.add(top(tube(p1,p2,r,c)));
       var d=new THREE.Vector3().subVectors(V(p2),V(p1)).normalize();
       var pp=new THREE.Vector3().crossVectors(d,new THREE.Vector3(0,0,1));
@@ -564,7 +565,7 @@ html, body{ height:100%; margin:0; }
       pp.normalize(); var tl=1.0;
       function tick(p){g.add(top(tube([p[0]-pp.x*tl,p[1]-pp.y*tl,p[2]-pp.z*tl],[p[0]+pp.x*tl,p[1]+pp.y*tl,p[2]+pp.z*tl],r,c)));}
       tick(p1);tick(p2);
-      var lb=makeDimLabel(txt,lh||null,null,false,c);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
+      var lb=makeDimLabel(txt,lh||null,null,!!thru,c);lb.position.set(lp[0],lp[1],lp[2]);g.add(lb);}
     // petite cote (marges de découpe) : trait fin, petit label
     function smallDim(p1,p2,txt,lp,c){c=c||olv;var rr=0.12;
       g.add(tube(p1,p2,rr,c));
@@ -602,10 +603,9 @@ html, body{ height:100%; margin:0; }
       var positioned=(nxv!=null && nxv>0);
       if(mgL>0.4 && (positioned || mgL<=8)){ smallDim([-hw,yO,zb],[xl,yO,zb],fmt(mgL),[(-hw+xl)/2,yO-sgn*1.6,zb],olv); g.add(dashed([-hw,yc,zb],[-hw,yO,zb],olv)); }
       if(mgR>0.4 && (positioned || mgR<=8)){ smallDim([xr2,yO,zb],[hw,yO,zb],fmt(mgR),[(xr2+hw)/2,yO-sgn*1.6,zb],olv); g.add(dashed([hw,yc,zb],[hw,yO,zb],olv)); }
-      // PROFONDEUR : À L'INTÉRIEUR, suspendue dans l'ouverture sous la découpe (trait aligné sur la découpe), chiffre centré juste en dessous — demandé.
-      var yI=sgn*(H/2-T) - sgn*7, xd=xc;
-      g.add(dashed([xd,sgn*(H/2-T),zb],[xd,yI,zb],olv));
-      dim([xd,yI,zb],[xd,yI,zb+cnh],[xd,yI,zb],[xd,yI,zb+cnh],[xd,yI,zb],[xd,yI,zb+cnh],fmt(cnh),[xd,yI-sgn*1.9,zb+cnh/2],olv,false,LH);
+      // PROFONDEUR : à l'emplacement de la découpe, trait dans l'alignement de la planche (face intérieure du panneau haut/bas), chiffre centré juste en dessous — demandé. (thru = toujours visible, c'est dans la zone découpée)
+      var yI=sgn*(H/2-T), xd=xc;
+      dim([xd,yI,zb],[xd,yI,zb+cnh],[xd,yI,zb],[xd,yI,zb+cnh],[xd,yI,zb],[xd,yI,zb+cnh],fmt(cnh),[xd,yI-sgn*1.6,zb+cnh/2],olv,false,LH,true);
     }
     notchDims(-H/2+T/2, state.notch, state.nw, state.nh, state.nx);
     notchDims( H/2-T/2, state.notchTop, state.nwT, state.nhT, state.nxT);
