@@ -106,7 +106,8 @@ img{max-width:100%}
 .sw-toggle.on{background:var(--accent-bright)}.sw-toggle.on::after{left:23px}
 .subdims{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 0 12px}
 .subdims .dimcell .lab{text-align:left;font-size:11.5px}
-.hint{font-size:11px;color:var(--muted);margin-top:5px;text-align:left}   /* rappel de la valeur qui centre la découpe */
+.hint{display:inline-block;font-size:11px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:3px 10px;margin-top:6px;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none}   /* clic = remet la valeur du centre dans la case */
+.hint:active{background:var(--line)}
 /* découpes latérales : sous-bloc indenté (barre à gauche) pour bien distinguer « couper tout le haut/bas » des options principales (verrou, etc.) */
 #subSG, #subSD{margin:0 0 8px;padding-left:16px;border-left:3px solid var(--line)}
 #subSG .subdims, #subSD .subdims{padding-top:10px}
@@ -395,6 +396,11 @@ img{max-width:100%}
   togCut('cutTG','cutTG','cellSHg','cutTG','cutBG','gauche'); togCut('cutBG','cutBG','cellSHg','cutTG','cutBG','gauche');
   togCut('cutTD','cutTD','cellSHd','cutTD','cutBD','droite'); togCut('cutBD','cutBD','cellSHd','cutTD','cutBD','droite');
   tog('lock','lock');   // serrure (option de prix ; n'affecte pas le 3D)
+  // clic sur la puce « centre = X cm » → remet la valeur du centre dans la case (et reprend le recentrage auto)
+  [['hintT','posT','inPosT'],['hintB','posB','inPosB'],['hintG','posG','inPosG'],['hintD','posD','inPosD']].forEach(function(a){
+    var h=document.getElementById(a[0]); if(!h) return;
+    h.addEventListener('click',function(){ touched[a[1]]=false; var c=Math.round(ctrVal(a[1])*10)/10; state[a[1]]=c; var inp=document.getElementById(a[2]); if(inp) inp.value=fmtCm(c); sync(); });
+  });
 
   /* ---- date de fabrication : MÊME logique que le site (Session de fabrication v5) ----
      Clôture = finCommandes de config.json si future, sinon prochain mercredi 21h (Paris) ; fabrication = clôture +1 j. */
