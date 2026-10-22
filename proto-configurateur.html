@@ -106,6 +106,7 @@ img{max-width:100%}
 .sw-toggle.on{background:var(--accent-bright)}.sw-toggle.on::after{left:23px}
 .subdims{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 0 12px}
 .subdims .dimcell .lab{text-align:left;font-size:11.5px}
+.hint{font-size:11px;color:var(--muted);margin-top:5px;text-align:left}   /* rappel de la valeur qui centre la découpe */
 /* découpes latérales : sous-bloc indenté (barre à gauche) pour bien distinguer « couper tout le haut/bas » des options principales (verrou, etc.) */
 #subSG, #subSD{margin:0 0 8px;padding-left:16px;border-left:3px solid var(--line)}
 #subSG .subdims, #subSD .subdims{padding-top:10px}
@@ -221,9 +222,8 @@ img{max-width:100%}
             <div class="dimcell"><div class="lab">Largeur</div><div class="cstep" data-k="NWt"><button data-d="-1">−</button><input id="inNWt" inputmode="decimal" value="12"><button data-d="1">+</button></div></div>
             <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="NDt"><button data-d="-1">−</button><input id="inNDt" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
           </div>
-          <div class="opt" style="padding:9px 0"><div class="txt"><b>Découpe centrée</b><span>sinon : distance depuis le bord gauche</span></div><button class="sw-toggle on" id="ctrT"></button></div>
-          <div class="subdims" id="posHaut" hidden>
-            <div class="dimcell"><div class="lab">Distance du bord gauche</div><div class="cstep" data-k="posT"><button data-d="-1">−</button><input id="inPosT" inputmode="decimal" value="3"><button data-d="1">+</button></div></div>
+          <div class="subdims" id="posHaut">
+            <div class="dimcell"><div class="lab">Distance du bord gauche</div><div class="cstep" data-k="posT"><button data-d="-1">−</button><input id="inPosT" inputmode="decimal" value="11.5"><button data-d="1">+</button></div><div class="hint" id="hintT">centre = 11,5 cm</div></div>
           </div>
         </div>
 
@@ -233,9 +233,8 @@ img{max-width:100%}
             <div class="dimcell"><div class="lab">Largeur</div><div class="cstep" data-k="NWb"><button data-d="-1">−</button><input id="inNWb" inputmode="decimal" value="12"><button data-d="1">+</button></div></div>
             <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="NDb"><button data-d="-1">−</button><input id="inNDb" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
           </div>
-          <div class="opt" style="padding:9px 0"><div class="txt"><b>Découpe centrée</b><span>sinon : distance depuis le bord gauche</span></div><button class="sw-toggle on" id="ctrB"></button></div>
-          <div class="subdims" id="posBas" hidden>
-            <div class="dimcell"><div class="lab">Distance du bord gauche</div><div class="cstep" data-k="posB"><button data-d="-1">−</button><input id="inPosB" inputmode="decimal" value="3"><button data-d="1">+</button></div></div>
+          <div class="subdims" id="posBas">
+            <div class="dimcell"><div class="lab">Distance du bord gauche</div><div class="cstep" data-k="posB"><button data-d="-1">−</button><input id="inPosB" inputmode="decimal" value="11.5"><button data-d="1">+</button></div><div class="hint" id="hintB">centre = 11,5 cm</div></div>
           </div>
         </div>
 
@@ -245,9 +244,8 @@ img{max-width:100%}
             <div class="dimcell" id="cellSHg"><div class="lab">Hauteur</div><div class="cstep" data-k="SHg"><button data-d="-1">−</button><input id="inSHg" inputmode="decimal" value="10"><button data-d="1">+</button></div></div>
             <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="SPg"><button data-d="-1">−</button><input id="inSPg" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
           </div>
-          <div class="opt" style="padding:9px 0" id="rowCtrG"><div class="txt"><b>Découpe centrée</b><span>sinon : distance depuis le bas</span></div><button class="sw-toggle on" id="ctrG"></button></div>
-          <div class="subdims" id="posSG" hidden>
-            <div class="dimcell"><div class="lab">Distance du bas</div><div class="cstep" data-k="posG"><button data-d="-1">−</button><input id="inPosG" inputmode="decimal" value="3"><button data-d="1">+</button></div></div>
+          <div class="subdims" id="posSG">
+            <div class="dimcell"><div class="lab">Distance du bas</div><div class="cstep" data-k="posG"><button data-d="-1">−</button><input id="inPosG" inputmode="decimal" value="25"><button data-d="1">+</button></div><div class="hint" id="hintG">centre = 25 cm</div></div>
           </div>
           <div class="opt" style="padding:9px 0"><div class="txt"><b>Couper tout le haut</b><span>jusqu'au bord supérieur</span></div><button class="sw-toggle" id="cutTG"></button></div>
           <div class="opt" style="padding:9px 0"><div class="txt"><b>Couper tout le bas</b><span>jusqu'au bord inférieur</span></div><button class="sw-toggle" id="cutBG"></button></div>
@@ -259,9 +257,8 @@ img{max-width:100%}
             <div class="dimcell" id="cellSHd"><div class="lab">Hauteur</div><div class="cstep" data-k="SHd"><button data-d="-1">−</button><input id="inSHd" inputmode="decimal" value="10"><button data-d="1">+</button></div></div>
             <div class="dimcell"><div class="lab">Profondeur</div><div class="cstep" data-k="SPd"><button data-d="-1">−</button><input id="inSPd" inputmode="decimal" value="4"><button data-d="1">+</button></div></div>
           </div>
-          <div class="opt" style="padding:9px 0" id="rowCtrD"><div class="txt"><b>Découpe centrée</b><span>sinon : distance depuis le bas</span></div><button class="sw-toggle on" id="ctrD"></button></div>
-          <div class="subdims" id="posSD" hidden>
-            <div class="dimcell"><div class="lab">Distance du bas</div><div class="cstep" data-k="posD"><button data-d="-1">−</button><input id="inPosD" inputmode="decimal" value="3"><button data-d="1">+</button></div></div>
+          <div class="subdims" id="posSD">
+            <div class="dimcell"><div class="lab">Distance du bas</div><div class="cstep" data-k="posD"><button data-d="-1">−</button><input id="inPosD" inputmode="decimal" value="25"><button data-d="1">+</button></div><div class="hint" id="hintD">centre = 25 cm</div></div>
           </div>
           <div class="opt" style="padding:9px 0"><div class="txt"><b>Couper tout le haut</b><span>jusqu'au bord supérieur</span></div><button class="sw-toggle" id="cutTD"></button></div>
           <div class="opt" style="padding:9px 0"><div class="txt"><b>Couper tout le bas</b><span>jusqu'au bord inférieur</span></div><button class="sw-toggle" id="cutBD"></button></div>
@@ -305,26 +302,26 @@ img{max-width:100%}
   var MAX={H:140,L:120,P:40};
   var DLBL={H:'hauteur',L:'largeur',P:'profondeur'};
   var state={H:60,L:35,P:15,hinge:'G',
-    dHaut:false,NWt:12,NDt:4,ctrT:true,posT:3, dBas:false,NWb:12,NDb:4,ctrB:true,posB:3,
-    dSG:false,SHg:10,SPg:4,ctrG:true,posG:3,cutTG:false,cutBG:false, dSD:false,SHd:10,SPd:4,ctrD:true,posD:3,cutTD:false,cutBD:false, lock:false};
+    dHaut:false,NWt:12,NDt:4,posT:11.5, dBas:false,NWb:12,NDb:4,posB:11.5,
+    dSG:false,SHg:10,SPg:4,posG:25,cutTG:false,cutBG:false, dSD:false,SHd:10,SPd:4,posD:25,cutTD:false,cutBD:false, lock:false};
   var touched={};
   var frame=$('#viewer');
 
   /* ---- pont vers le VRAI viewer 3D ---- */
   function push(focus){
     var w=frame.contentWindow; if(!w) return;
-    // position découpe haut/bas : nx = distance depuis le bord GAUCHE (0 => centré côté viewer). On autorise 0 (collé au bord) via un epsilon 0.01. Bornée à [0, L-largeur].
-    var nxT = state.ctrT ? 0 : Math.max(0.01, Math.min(state.posT, Math.max(0.01, state.L-state.NWt)));
-    var nxB = state.ctrB ? 0 : Math.max(0.01, Math.min(state.posB, Math.max(0.01, state.L-state.NWb)));
-    // position découpe côté : slY/srY = distance depuis le BAS intérieur (ctr => centré). La découpe peut aller de 0 (collée au bas) jusqu'à la pleine hauteur intérieure (H). Bornée à [0, H-hauteur].
+    // position découpe haut/bas : nx = distance depuis le bord GAUCHE. Toujours explicite (plus de mode « centré ») ; la valeur par défaut = milieu => centrée. epsilon 0.01 pour autoriser 0 (collé au bord). Bornée à [0, L-largeur].
+    var nxT = Math.max(0.01, Math.min(state.posT, Math.max(0.01, state.L-state.NWt)));
+    var nxB = Math.max(0.01, Math.min(state.posB, Math.max(0.01, state.L-state.NWb)));
+    // position découpe côté : slY/srY = distance depuis le BAS intérieur (toujours explicite). De 0 (collée au bas) jusqu'à la pleine hauteur intérieure (H). Bornée à [0, H-hauteur].
     var Hint=Math.max(0,state.H);
-    var slY=state.ctrG?null:Math.max(0,Math.min(state.posG, Math.max(0,Hint-state.SHg)));
-    var srY=state.ctrD?null:Math.max(0,Math.min(state.posD, Math.max(0,Hint-state.SHd)));
+    var slY=Math.max(0,Math.min(state.posG, Math.max(0,Hint-state.SHg)));
+    var srY=Math.max(0,Math.min(state.posD, Math.max(0,Hint-state.SHd)));
     w.postMessage({cbType:'cb-dims', focus:focus||null, L:state.L, H:state.H, P:state.P, hinge:state.hinge,
       decH:state.dHaut, nwT:state.NWt, nhT:state.NDt, nxT:nxT,
       decB:state.dBas,  nw:state.NWb,  nh:state.NDb,  nxB:nxB,
-      decCG:state.dSG, slH:state.SHg, slP:state.SPg, slY:slY, slCT:state.cutTG, slCB:state.cutBG, slCtr:state.ctrG,
-      decCD:state.dSD, srH:state.SHd, srP:state.SPd, srY:srY, srCT:state.cutTD, srCB:state.cutBD, srCtr:state.ctrD
+      decCG:state.dSG, slH:state.SHg, slP:state.SPg, slY:slY, slCT:state.cutTG, slCB:state.cutBG, slCtr:false,
+      decCD:state.dSD, srH:state.SHd, srP:state.SPd, srY:srY, srCT:state.cutTD, srCB:state.cutBD, srCtr:false
     },'*');
   }
   // le viewer peut mettre un court instant à écouter / finir son intro → on pousse plusieurs fois
@@ -350,7 +347,24 @@ img{max-width:100%}
     if(state.H>0&&state.L>0&&state.P>0){ el.hidden=false;
       el.innerHTML='Dimensions extérieures : <b>H '+fnum(state.H+3.6)+' · L '+fnum(state.L+3.6)+' · P '+fnum(state.P+1.8)+' cm</b>'; }
     else el.hidden=true; }   /* les dimensions utiles sont affichées sur le 3D (cotes dorées) */
-  function sync(focus){ refreshPrice(); refreshExt(); showErr(); var sw=document.getElementById('sensWrap'); if(sw) sw.hidden=(state.L>60); push(focus); }   // 2 portes (L>60) → sens inutile
+  // valeur de distance qui CENTRE la découpe (haut/bas : depuis le bord gauche ; côtés : depuis le bas)
+  function ctrVal(k){
+    if(k==='posT') return Math.max(0,(state.L-state.NWt)/2);
+    if(k==='posB') return Math.max(0,(state.L-state.NWb)/2);
+    if(k==='posG') return Math.max(0,(state.H-state.SHg)/2);
+    if(k==='posD') return Math.max(0,(state.H-state.SHd)/2);
+    return 0;
+  }
+  var fmtCm=function(n){return (Math.round(n*10)/10).toString().replace('.',',');};
+  // tant que l'utilisateur n'a pas saisi de distance, on garde la découpe centrée ; on rappelle toujours la valeur du centre sous le champ
+  function refreshPos(){
+    [['posT','inPosT','hintT'],['posB','inPosB','hintB'],['posG','inPosG','hintG'],['posD','inPosD','hintD']].forEach(function(a){
+      var c=Math.round(ctrVal(a[0])*10)/10, inp=document.getElementById(a[1]), h=document.getElementById(a[2]);
+      if(!touched[a[0]]){ state[a[0]]=c; if(inp && document.activeElement!==inp) inp.value=fmtCm(c); }
+      if(h) h.textContent='centre = '+fmtCm(c)+' cm';
+    });
+  }
+  function sync(focus){ refreshPrice(); refreshExt(); showErr(); refreshPos(); var sw=document.getElementById('sensWrap'); if(sw) sw.hidden=(state.L>60); push(focus); }   // 2 portes (L>60) → sens inutile
 
   /* ---- steppers ----
      dimensions principales : 3D en direct ; dimensions de découpe : 3D mis à jour au blur
@@ -371,20 +385,13 @@ img{max-width:100%}
   function tog(id,key,sub,focus){var b=document.getElementById(id);b.onclick=function(){state[key]=!state[key];b.classList.toggle('on',state[key]);if(sub){document.getElementById(sub).hidden=!state[key];requestAnimationFrame(layout);}sync(focus?(state[key]?focus:'front'):undefined);};}
   tog('dHaut','dHaut','subHaut','haut'); tog('dBas','dBas','subBas','bas'); tog('dSG','dSG','subSG','gauche'); tog('dSD','dSD','subSD','droite');
   // « Découpe centrée » : ON => centrée ; OFF => champ distance visible (haut/bas = depuis le bord gauche ; côtés = depuis le bas)
-  function togCtr(id,key,posSub){var b=document.getElementById(id);b.onclick=function(){
-    state[key]=!state[key];b.classList.toggle('on',state[key]);
-    var ps=document.getElementById(posSub);if(ps)ps.hidden=state[key];
-    requestAnimationFrame(layout);sync();};}   // option secondaire → pas de mouvement caméra
-  togCtr('ctrT','ctrT','posHaut'); togCtr('ctrB','ctrB','posBas');
-  togCtr('ctrG','ctrG','posSG'); togCtr('ctrD','ctrD','posSD');
   function togCut(id,key,cellId,ctKey,cbKey,focus){var b=document.getElementById(id);b.onclick=function(){
     state[key]=!state[key];b.classList.toggle('on',state[key]);
     var c=document.getElementById(cellId);if(c)c.style.display=(state[ctKey]&&state[cbKey])?'none':'';   // hauteur inutile si haut ET bas coupés
-    // « couper tout » force la position → on masque le réglage centré/distance de ce côté
+    // « couper tout » force la position → on masque le champ distance de ce côté
     var anyCut=state[ctKey]||state[cbKey], sfx=(focus==='gauche')?'G':'D';
-    var rc=document.getElementById('rowCtr'+sfx), ps=document.getElementById('posS'+sfx);
-    if(rc)rc.style.display=anyCut?'none':''; if(ps)ps.hidden=anyCut?true:state['ctr'+sfx];
-    requestAnimationFrame(layout);sync();};}   // option secondaire → pas de mouvement caméra (focus sert juste à repérer le côté)
+    var ps=document.getElementById('posS'+sfx); if(ps)ps.hidden=anyCut;
+    requestAnimationFrame(layout);sync();};}   // option secondaire → pas de mouvement caméra
   togCut('cutTG','cutTG','cellSHg','cutTG','cutBG','gauche'); togCut('cutBG','cutBG','cellSHg','cutTG','cutBG','gauche');
   togCut('cutTD','cutTD','cellSHd','cutTD','cutBD','droite'); togCut('cutBD','cutBD','cellSHd','cutTD','cutBD','droite');
   tog('lock','lock');   // serrure (option de prix ; n'affecte pas le 3D)
