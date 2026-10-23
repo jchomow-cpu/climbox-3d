@@ -305,7 +305,7 @@ img{max-width:100%}
 (function(){
   "use strict";
   var $=function(s){return document.querySelector(s)};
-  var MIN={H:20,L:15,P:7,NWt:4,NDt:2,NWb:4,NDb:2,SHg:4,SPg:2,SHd:4,SPd:2};
+  var MIN={H:20,L:15,P:7,NWt:1,NDt:1,NWb:1,NDb:1,SHg:1,SPg:1,SHd:1,SPd:1};
   var MAX={H:140,L:120,P:40};
   var DLBL={H:'hauteur',L:'largeur',P:'profondeur'};
   var state={H:60,L:35,P:15,hinge:'G',
@@ -340,7 +340,15 @@ img{max-width:100%}
   var BASE=117.95; try{var _m=/[?&]base=([\d.]+)/.exec(location.search); if(_m) BASE=parseFloat(_m[1])||117.95;}catch(e){}
   function nDec(){return (state.dHaut?1:0)+(state.dBas?1:0)+(state.dSG?1:0)+(state.dSD?1:0);}
   function price(){var s=state.H+state.L+state.P;var supp=s>130?Math.ceil(s-130):0;return BASE+supp+nDec()*5+(state.lock?10:0);}   // supplément 1 €/cm au-delà de 130, découpe 5 €, serrure 10 €
-  function clamp(k,v){v=Math.round(v);if(MAX[k])v=Math.min(v,MAX[k]);v=Math.max(v,MIN[k]||0);return v;}
+  // borne max dynamique pour la distance d'une découpe (au-delà, la découpe serait hors du cache → on bloque le chiffre)
+  function posMax(k){
+    if(k==='posT') return Math.max(0,(state.L||0)-(state.NWt||0));
+    if(k==='posB') return Math.max(0,(state.L||0)-(state.NWb||0));
+    if(k==='posG') return Math.max(0,(state.H||0)-(state.SHg||0));
+    if(k==='posD') return Math.max(0,(state.H||0)-(state.SHd||0));
+    return null;
+  }
+  function clamp(k,v){v=Math.round(v);var pm=posMax(k);if(pm!=null)v=Math.min(v,pm);if(MAX[k])v=Math.min(v,MAX[k]);v=Math.max(v,MIN[k]||0);return v;}
   function dimErr(k){if(k!=='H'&&k!=='L'&&k!=='P')return false;var v=state[k];return v>0&&(v<MIN[k]||v>MAX[k]);}
   function showErr(){
     var msgs=[];['H','L','P'].forEach(function(k){var id={H:'inH',L:'inL',P:'inP'}[k];
@@ -368,6 +376,7 @@ img{max-width:100%}
     [['posT','inPosT','hintT'],['posB','inPosB','hintB'],['posG','inPosG','hintG'],['posD','inPosD','hintD']].forEach(function(a){
       var c=Math.round(ctrVal(a[0])*10)/10, inp=document.getElementById(a[1]), h=document.getElementById(a[2]);
       if(!touched[a[0]]){ state[a[0]]=c; if(inp && document.activeElement!==inp) inp.value=fmtCm(c); }
+      else { var pm=posMax(a[0]); if(pm!=null && state[a[0]]>pm){ state[a[0]]=pm; if(inp && document.activeElement!==inp) inp.value=fmtCm(pm); } }   // si les dims changent, on re-borne la distance saisie
       if(h) h.textContent='centre = '+fmtCm(c)+' cm';
     });
   }
