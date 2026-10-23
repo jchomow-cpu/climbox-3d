@@ -603,9 +603,10 @@ html, body{ height:100%; margin:0; }
       var positioned=(nxv!=null && nxv>0);
       if(mgL>0.4 && (positioned || mgL<=8)){ smallDim([-hw,yO,zb],[xl,yO,zb],fmt(mgL),[(-hw+xl)/2,yO-sgn*1.6,zb],olv); g.add(dashed([-hw,yc,zb],[-hw,yO,zb],olv)); }
       if(mgR>0.4 && (positioned || mgR<=8)){ smallDim([xr2,yO,zb],[hw,yO,zb],fmt(mgR),[(xr2+hw)/2,yO-sgn*1.6,zb],olv); g.add(dashed([hw,yc,zb],[hw,yO,zb],olv)); }
-      // PROFONDEUR : à l'emplacement de la découpe, trait aligné sur la planche, chiffre centré juste en dessous. thru = visible par-dessus le bois mais ordre bas → les cotes plus proches (P, etc.) passent devant — demandé.
-      var yI=sgn*(H/2-T), xd=xc;
-      dim([xd,yI,zb],[xd,yI,zb+cnh],[xd,yI,zb],[xd,yI,zb+cnh],[xd,yI,zb],[xd,yI,zb+cnh],fmt(cnh),[xd,yI-sgn*1.6,zb+cnh/2],olv,false,LH,true);
+      // PROFONDEUR : suspendue dans l'ouverture sous la découpe (seule position visible SANS passer par-dessus le bois), reliée à la fente par un trait, chiffre centré juste en dessous. PAS de thru → respecte le bois — demandé.
+      var yI=sgn*(H/2-T) - sgn*6, xd=xc;
+      g.add(dashed([xd,yc,zb],[xd,yI,zb],olv));
+      dim([xd,yI,zb],[xd,yI,zb+cnh],[xd,yI,zb],[xd,yI,zb+cnh],[xd,yI,zb],[xd,yI,zb+cnh],fmt(cnh),[xd,yI-sgn*1.6,zb+cnh/2],olv,false,LH);
     }
     notchDims(-H/2+T/2, state.notch, state.nw, state.nh, state.nx);
     notchDims( H/2-T/2, state.notchTop, state.nwT, state.nhT, state.nxT);
