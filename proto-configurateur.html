@@ -346,7 +346,25 @@ img{max-width:100%}
     if(k==='posB') return Math.max(0,(state.L||0)-(state.NWb||0));
     if(k==='posG') return Math.max(0,(state.H||0)-(state.SHg||0));
     if(k==='posD') return Math.max(0,(state.H||0)-(state.SHd||0));
+    if(k==='SPg'||k==='SPd') return sideMax();
     return null;
+  }
+  // profondeur max d'une découpe de côté = profondeur intérieure du cache − 5 cm (il doit rester 5 cm de joue)
+  var SIDE_KEEP=5;
+  function sideMax(){ return Math.max(MIN.SPg, Math.round(((state.P||0)-SIDE_KEEP)*10)/10); }
+  // message traduit : les pages DE / IT / PL injectent ce fichier dans leur page (même origine) → on lit la langue de la page parente
+  function cbLang(){ var l=''; try{ if(window.parent&&window.parent!==window) l=window.parent.document.documentElement.lang||''; }catch(e){} if(!l) l=document.documentElement.lang||'fr'; return l.slice(0,2).toLowerCase(); }
+  function sideMsg(){ var m=String(sideMax()).replace('.',','), g=cbLang();
+    if(g==='de') return 'Seitlicher Ausschnitt: maximale Tiefe '+m+' cm (Tiefe der Abdeckung − '+SIDE_KEEP+' cm)';
+    if(g==='it') return 'Taglio laterale: profondità massima '+m+' cm (profondità del mobile − '+SIDE_KEEP+' cm)';
+    if(g==='pl') return 'Wycięcie boczne: maksymalna głębokość '+m+' cm (głębokość osłony − '+SIDE_KEEP+' cm)';
+    return 'Découpe de côté : profondeur maximum '+m+' cm (profondeur du cache − '+SIDE_KEEP+' cm)'; }
+  // si la profondeur du cache change, on re-borne les profondeurs de découpe déjà saisies (pas pendant la frappe de la profondeur)
+  function refreshSide(){
+    var ip=document.getElementById('inP'); if(document.activeElement===ip || !(state.P>=MIN.P)) return;
+    var mx=sideMax();
+    [['SPg','inSPg'],['SPd','inSPd']].forEach(function(a){ var inp=document.getElementById(a[1]);
+      if(state[a[0]]>mx){ state[a[0]]=mx; if(inp && document.activeElement!==inp) inp.value=String(mx).replace('.',','); } });
   }
   function clamp(k,v){v=Math.round(v);var pm=posMax(k);if(pm!=null)v=Math.min(v,pm);if(MAX[k])v=Math.min(v,MAX[k]);v=Math.max(v,MIN[k]||0);return v;}
   function dimErr(k){if(k!=='H'&&k!=='L'&&k!=='P')return false;var v=state[k];return v>0&&(v<MIN[k]||v>MAX[k]);}
@@ -380,7 +398,7 @@ img{max-width:100%}
       if(h) h.textContent='centre = '+fmtCm(c)+' cm';
     });
   }
-  function sync(focus){ refreshPrice(); refreshExt(); showErr(); refreshPos(); var sw=document.getElementById('sensWrap'); if(sw) sw.hidden=(state.L>60); push(focus); }   // 2 portes (L>60) → sens inutile
+  function sync(focus){ refreshSide(); refreshPrice(); refreshExt(); showErr(); refreshPos(); var sw=document.getElementById('sensWrap'); if(sw) sw.hidden=(state.L>60); push(focus); }   // 2 portes (L>60) → sens inutile
 
   /* ---- steppers ----
      dimensions principales : 3D en direct ; dimensions de découpe : 3D mis à jour au blur
@@ -391,7 +409,8 @@ img{max-width:100%}
       state[k]=clamp(k,(state[k]||0)+ +btn.getAttribute('data-d'));inp.value=state[k];touched[k]=true;sync();};});
     inp.addEventListener('input',function(){var v=parseFloat(inp.value.replace(',','.'));state[k]=isNaN(v)?0:v; if(isMain)sync(); else{refreshPrice();showErr();} });
     inp.addEventListener('focus',function(){touched[k]=false;showErr();});
-    inp.addEventListener('blur',function(){touched[k]=true;var raw=state[k];if(state[k]>0)state[k]=clamp(k,state[k]);inp.value=state[k]||'';if(MAX[k]&&raw>MAX[k]){toast('Maximum '+(DLBL[k]||'')+' : '+MAX[k]+' cm — valeur ajustée');}showErr();sync();});
+    inp.addEventListener('blur',function(){touched[k]=true;var raw=state[k];if(state[k]>0)state[k]=clamp(k,state[k]);inp.value=state[k]||'';if(MAX[k]&&raw>MAX[k]){toast('Maximum '+(DLBL[k]||'')+' : '+MAX[k]+' cm — valeur ajustée');}
+      if((k==='SPg'||k==='SPd')&&raw>sideMax()){toast(sideMsg());}showErr();sync();});
   });
 
   document.querySelectorAll('#sens button').forEach(function(b){b.onclick=function(){
