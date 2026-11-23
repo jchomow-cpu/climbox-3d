@@ -348,6 +348,7 @@ img{max-width:100%}
     if(k==='posD') return Math.max(0,(state.H||0)-(state.SHd||0));
     if(k==='SPg'||k==='SPd') return sideMax();
     if(k==='NWt'||k==='NWb') return widMax();
+    if(k==='NDt'||k==='NDb') return depMax();
     return null;
   }
   // profondeur max d'une découpe de côté = profondeur intérieure du cache − 5 cm (il doit rester 5 cm de joue)
@@ -367,6 +368,21 @@ img{max-width:100%}
     if(g==='it') return 'Intaglio in alto / in basso: larghezza massima '+m+' cm (larghezza del mobile)';
     if(g==='pl') return 'Wycięcie u góry / u dołu: maksymalna szerokość '+m+' cm (szerokość osłony)';
     return 'Découpe haute / basse : largeur maximum '+m+' cm (largeur du cache)'; }
+  // profondeur max d'une découpe haute / basse = profondeur intérieure du cache − 3 cm
+  var TOP_KEEP=3;
+  function depMax(){ return Math.max(MIN.NDt, Math.round(((state.P||0)-TOP_KEEP)*10)/10); }
+  function depMsg(){ var m=String(depMax()).replace('.',','), g=cbLang();
+    if(g==='de') return 'Ausschnitt oben / unten: maximale Tiefe '+m+' cm (Tiefe der Abdeckung − '+TOP_KEEP+' cm)';
+    if(g==='it') return 'Intaglio in alto / in basso: profondità massima '+m+' cm (profondità del mobile − '+TOP_KEEP+' cm)';
+    if(g==='pl') return 'Wycięcie u góry / u dołu: maksymalna głębokość '+m+' cm (głębokość osłony − '+TOP_KEEP+' cm)';
+    return 'Découpe haute / basse : profondeur maximum '+m+' cm (profondeur du cache − '+TOP_KEEP+' cm)'; }
+  // si la profondeur du cache change, on re-borne les profondeurs des découpes haute / basse déjà saisies (pas pendant la frappe)
+  function refreshDep(){
+    var ip=document.getElementById('inP'); if(document.activeElement===ip || !(state.P>=MIN.P)) return;
+    var mx=depMax();
+    [['NDt','inNDt'],['NDb','inNDb']].forEach(function(a){ var inp=document.getElementById(a[1]);
+      if(state[a[0]]>mx){ state[a[0]]=mx; if(inp && document.activeElement!==inp) inp.value=String(mx).replace('.',','); } });
+  }
   // si la largeur du cache change, on re-borne les largeurs de découpe déjà saisies (pas pendant la frappe de la largeur)
   function refreshWid(){
     var il=document.getElementById('inL'); if(document.activeElement===il || !(state.L>=MIN.L)) return;
@@ -413,7 +429,7 @@ img{max-width:100%}
       if(h) h.textContent='centre = '+fmtCm(c)+' cm';
     });
   }
-  function sync(focus){ refreshSide(); refreshWid(); refreshPrice(); refreshExt(); showErr(); refreshPos(); var sw=document.getElementById('sensWrap'); if(sw) sw.hidden=(state.L>60); push(focus); }   // 2 portes (L>60) → sens inutile
+  function sync(focus){ refreshSide(); refreshWid(); refreshDep(); refreshPrice(); refreshExt(); showErr(); refreshPos(); var sw=document.getElementById('sensWrap'); if(sw) sw.hidden=(state.L>60); push(focus); }   // 2 portes (L>60) → sens inutile
 
   /* ---- steppers ----
      dimensions principales : 3D en direct ; dimensions de découpe : 3D mis à jour au blur
@@ -426,7 +442,8 @@ img{max-width:100%}
     inp.addEventListener('focus',function(){touched[k]=false;showErr();});
     inp.addEventListener('blur',function(){touched[k]=true;var raw=state[k];if(state[k]>0)state[k]=clamp(k,state[k]);inp.value=state[k]||'';if(MAX[k]&&raw>MAX[k]){toast('Maximum '+(DLBL[k]||'')+' : '+MAX[k]+' cm — valeur ajustée');}
       if((k==='SPg'||k==='SPd')&&raw>sideMax()){toast(sideMsg());}
-      if((k==='NWt'||k==='NWb')&&raw>widMax()){toast(widMsg());}showErr();sync();});
+      if((k==='NWt'||k==='NWb')&&raw>widMax()){toast(widMsg());}
+      if((k==='NDt'||k==='NDb')&&raw>depMax()){toast(depMsg());}showErr();sync();});
   });
 
   document.querySelectorAll('#sens button').forEach(function(b){b.onclick=function(){
