@@ -5,7 +5,7 @@ var M={"1g3eav9":"Bardzo ładny mebel, łatwy w montażu, szybko dostarczony –
 var SEL='.vtl-pr-review-card__review-text-content';
 function H(s){var h=5381;for(var i=0;i<s.length;i++)h=((h*33)^s.charCodeAt(i))>>>0;return h.toString(36);}
 function run(){
- var fl=document.querySelectorAll('a[href*="/collections/facades-de-cuisine"]');for(var k=0;k<fl.length;k++){var li=fl[k].closest('li')||fl[k];if(li.style.display!=='none')li.style.display='none';}
+ var fl=document.querySelectorAll('a[href*="/collections/facades-de-cuisine"],header a[href*="/collections/cache-machine-a-laver"],header a[href*="/collections/obudowa-smietnikowa"]');for(var k=0;k<fl.length;k++){var li=fl[k].closest('li')||fl[k];if(li.style.display!=='none')li.style.display='none';}
  var els=document.querySelectorAll(SEL),n=0;
  for(var i=0;i<els.length;i++){var e=els[i];if(e.getAttribute('data-cbx-tr'))continue;
   var src=e.textContent.replace(/\s+/g,' ').trim(),t=M[H(src)];
