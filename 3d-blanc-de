@@ -287,6 +287,8 @@
   // ---- scène ----
   var renderer = new THREE.WebGLRenderer({ canvas:canvas, antialias:true, alpha:true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  // nettete du bois : filtrage anisotrope (veines nettes meme en vue rasante)
+  try{ var _an = renderer.capabilities.getMaxAnisotropy(); [oakTex, oakTexSide, normalTex, normalTexSide].forEach(function(t){ t.anisotropy = _an; if(t.image) t.needsUpdate = true; }); }catch(e){}
   if(THREE.sRGBEncoding) renderer.outputEncoding = THREE.sRGBEncoding;
 
   var scene = new THREE.Scene();
@@ -324,18 +326,7 @@
   var normalTexSide = new THREE.Texture();
   normalTexSide.wrapS = normalTexSide.wrapT = THREE.ClampToEdgeWrapping;
   normalTexSide.center.set(0.5,0.5); normalTexSide.rotation = Math.PI/2;
-  (function(){ var im = new Image(); im.onload = function(){
-    // Relief du bois : la texture de relief est a lignes horizontales alors que le veinage du chene est vertical.
-    // On la tourne de 90 deg (et on tourne aussi les vecteurs R/G) pour que le relief suive les veines au lieu de les croiser.
-    var src = im;
-    try{
-      var c = document.createElement('canvas'); c.width = im.height; c.height = im.width;
-      var x = c.getContext('2d'); x.translate(c.width/2, c.height/2); x.rotate(Math.PI/2); x.drawImage(im, -im.width/2, -im.height/2);
-      var d = x.getImageData(0,0,c.width,c.height), p = d.data;
-      for(var i=0;i<p.length;i+=4){ var r=p[i], g=p[i+1]; p[i]=g; p[i+1]=255-r; }
-      x.putImageData(d,0,0); src = c;
-    }catch(e){ src = im; }
-    normalTex.image = src; normalTex.needsUpdate = true; normalTexSide.image = src; normalTexSide.needsUpdate = true; }; im.src = NORMAL_URI; })();
+  (function(){ var im = new Image(); im.onload = function(){ normalTex.image = im; normalTex.needsUpdate = true; normalTexSide.image = im; normalTexSide.needsUpdate = true; }; im.src = NORMAL_URI; })();
   function getWoodNormal(){ return normalTex; }
   function getWoodNormalSide(){ return normalTexSide; }
 
